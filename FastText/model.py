@@ -122,6 +122,7 @@ class FastText:
             global_step=self.global_step,
             learning_rate=learning_rate,
             optimizer='Adam')
+        return train_op
 
 
 def test():
