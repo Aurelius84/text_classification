@@ -7,30 +7,7 @@ from model import FastText
 from p4_zhihu_load_data import (creat_vocabulary, creat_vocabulary_label,
                                 load_data)
 from tflearn.data_utils import pad_sentences
-
-# configuration
-FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer("label_size", 1999, "number of labels")
-tf.app.flags.DEFINE_float("learning_rate", 0.01, "learning rate")
-tf.app.flags.DEFINE_integer("batch_size", 128,
-                            "batch size for training/evaluting")
-tf.app.flags.DEFINE_integer("decay_steps", 20000,
-                            "how many steps before decay learning rate")
-tf.app.flags.DEFINE_float("decay_rate", 0.8, "rate of decay for learning rate")
-tf.app.flags.DEFINE_integer("num_sampled", 50, "number of noise sampling")
-tf.app.flags.DEFINE_string("ckpt_dir", "fastText_checkpoints/",
-                           "checkpoint location for the model")
-tf.app.flags.DEFINE_integer("sentence_size", 200, "max sentence size")
-tf.app.flags.DEFINE_integer("embed_size", 100, "embedding size")
-tf.app.flags.DEFINE_boolean(
-    "is_training", True, "is training.true:training, false:testing/inference")
-tf.app.flags.DEFINE_integer("num_epoches", 15, "numbers of training epoch")
-tf.app.flags.DEFINE_integer("validate_every", 10,
-                            "validate every validate every epoch")
-tf.app.flags.DEFINE_boolean("use_embedding", True,
-                            "whether to use embedding or not")
-tf.app.flags.DEFINE_string("cache_path", "fastText_checkpoints/data_cache.pik",
-                           "checkpoint location for the model")
+from config import params as FLAGS
 
 
 def main():
