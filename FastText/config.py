@@ -17,3 +17,5 @@ class params:
     validate_every = 10  # validate every validate every epoch
     use_embedding = True  # whether to use embedding or not
     cache_path = "fastText_checkpoints/data_cache.pik"  # checkpoint location for the model
+    predict_target_file = "fast_text_checkpoint/zhihu_result_ftB2.csv"  # target file path for final prediction
+    predict_source_file = 'test-zhihu-forpredict-v4only-title.txt'  # target file path for final prediction
