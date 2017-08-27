@@ -172,7 +172,7 @@ def assign_pretrained_word_embedding(sess, vocabulary_index2word,
     print("using pre-trained word embedding.ended...")
 
 
-def do_val(sess, fastText, evalX, evalY, batch_size):
+def do_eval(sess, fastText, evalX, evalY, batch_size):
     number_example = len(evalX)
     eval_loss, eval_acc, eval_counter = 0., 0., 0
     for start, end in zip(
