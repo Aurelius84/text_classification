@@ -41,19 +41,19 @@ class CNNRNN(object):
                 bias_regularizer=l2(0.01))(H_input)
             # batch_norm
             conv_batch_norm = Activation('relu')(BatchNormalization()(conv))
-            conv_pooling = MaxPool1D(
+            H = MaxPool1D(
                 pool_size=params['Conv1D']['layer%s' %
                                            i]['pooling_size'])(conv_batch_norm)
             # dropout
             if 'dropout' in params['Conv1D']['layer%s' % i]:
-                conv_pooling = Dropout(
-                    params['Conv1D']['layer%s' % i]['dropout'])(conv_pooling)
+                H = Dropout(
+                    params['Conv1D']['layer%s' % i]['dropout'])(H)
 
         # 3. Bi-LSTM for outputs of convolution layers
         rnn_cell = Bidirectional(
             GRU(params['RNN']['cell'],
                 dropout=params['RNN']['dropout'],
-                recurrent_dropout=params['RNN']['recurrent_dropout']))(conv_pooling)
+                recurrent_dropout=params['RNN']['recurrent_dropout']))(H)
 
         # 4. predict probs for labels
         kwargs = params['label']['kwargs'] if 'kwargs' in params['label'] else {}
