@@ -85,3 +85,7 @@ class CNNRNN(object):
             self.loss = tf.reduce_mean(binary_crossentropy(self.labels, self.probs), name='loss')
         else:
             self.loss = tf.reduce_mean(categorical_crossentropy(self.labels, self.probs), name='loss')
+
+        # 6. set train_op
+        self.train_op = tf.train.RMSPropOptimizer(params['learn_rate']).minimize(
+            self.loss)

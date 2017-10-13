@@ -1,18 +1,19 @@
 # params config
 # iter params
-batch_size:    2048
-epoch:         32
+batch_size:    48
+epoch:         10
 learn_rate:    0.01
-model_dir:     '../docs/model/checkpoints/'
+model_dir:     '../docs/model/'
 model_name:    'best.h5'
-model_type:    'CNN-non-static' # only CNN-static, CNN-non-static, CNN-rand valiable
+# model_type:    'CNN-non-static' # only CNN-static, CNN-non-static, CNN-rand valiable
+
 # data prarms
-title_dim:  0
-content_dim:  0
-embed_dim:  0
+title_dim:  0 # just placeholder
+content_dim:  0 # just placeholder
+embed_dim:  100
 label:
   dim: 2
-  loss_weight:    1
+  loss_weight:    1 # not use now
   loss_activate:  'sigmoid' # only sigmoid, softmax
   loss_func:  'binary_crossentropy' # only binary_crossentropy, categorical_crossentropy
   W_regularizer: 0.1
