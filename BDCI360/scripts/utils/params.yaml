@@ -1,7 +1,7 @@
 # params config
 # iter params
-batch_size:    2048
-epoch:         32
+batch_size:    48
+epoch:         10
 learn_rate:    0.01
 model_dir:     '../docs/model/'
 model_name:    'best.h5'
