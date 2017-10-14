@@ -77,7 +77,7 @@ class CNNRNN(object):
         # 5. calculate loss
         self.preds = tf.argmax(self.probs, axis=1, name="predictions")
         correct_prediction = tf.equal(
-            tf.cast(self.preds, tf.int32), tf.cast(self.labels, tf.int32))
+            tf.cast(self.preds, tf.int32), tf.cast(tf.argmax(self.labels, axis=1), tf.int32))
         self.accuracy = tf.reduce_mean(
             tf.cast(correct_prediction, tf.float32), name="accuracy")
 

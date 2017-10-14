@@ -19,6 +19,7 @@ import yaml
 from keras import backend as K
 from utils.cnn_rnn import CNNRNN
 from utils.data_helper import load_data_cv
+K.set_learning_phase(1)
 
 
 def do_eval(sess, model, eval_data, batch_size):
@@ -59,8 +60,8 @@ def do_eval(sess, model, eval_data, batch_size):
         print('label:', check_data[0])
         print('probs:', check_data[1])
         print('\n')
-
-    acc = np.mean(np.argmax(labels) == np.argmax(probs))
+    print(np.argmax(labels[:3], axis=1) == np.argmax(probs[:3], axis=1))
+    acc = np.mean(np.argmax(labels, axis=1) == np.argmax(probs, axis=1))
 
     K.set_learning_phase(1)
 
@@ -71,7 +72,7 @@ def train(params):
     '''
     train and eval.
     '''
-    datas, vocab = load_data_cv(file_path='../docs/data/train_1000.tsv', voc_path='../docs/data/voc.json', mode='train', cv=5)
+    datas, vocab = load_data_cv(file_path='../docs/data/train.tsv', voc_path='../docs/data/voc.json', mode='train', cv=5)
 
     params['title_dim'] = len(datas[0].deal_title)
     params['content_dim'] = len(datas[0].deal_content)
