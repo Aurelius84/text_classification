@@ -45,10 +45,10 @@ class ArticleSample(object):
             'judege': self.judge,
             'cv': self.cv,
             'deal_title': self.deal_title,
-            'deal_content': self.content,
+            'deal_content': self.deal_content,
             'deal_judge': self.deal_judge
         }
-        return json.dump(info, indent=4)
+        return json.dumps(info, indent=4)
 
 
 def build_vocab(file_path, voc_path):
@@ -70,9 +70,9 @@ def build_vocab(file_path, voc_path):
             content = line[-2]
             max_title_length = max(max_title_length, len(title))
             max_content_length = max(max_content_length, len(content))
-            if len(content) == 93749:
-                print(title)
-                print(content)
+            # if len(content) == 93749:
+            #     print(title)
+            #     print(content)
             for x in title:
                 if x not in voc:
                     voc_index += 1
@@ -125,12 +125,12 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
             if cnt % 20000 == 0:
                 print('load data:...', cnt)
             if mode == 'train':
-                id = line[0]
+                _id = line[0]
                 title = line[1] if len(line) == 4 else ''
                 content = line[-2]
                 judge = line[-1]
             else:
-                id = line[0]
+                _id = line[0]
                 title = line[1] if len(line) == 3 else ''
                 content = line[-1]
                 judge = ''
@@ -144,7 +144,7 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
             deal_content.extend([0] * (max_content_length - len(deal_content)))
             deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
             article = ArticleSample(
-                id=id,
+                _id=_id,
                 title=title,
                 deal_title=deal_title,
                 content=content,
