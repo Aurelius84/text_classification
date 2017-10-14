@@ -12,6 +12,8 @@ Competition url: http://www.datafountain.cn/#/competitions/276/intro
 import csv
 import json
 import os.path
+import re
+
 import numpy as np
 
 
@@ -28,6 +30,8 @@ class ArticleSample(object):
         :param judge:  结果(str: NEGATIVE或POSITIVE)
         :param deal_judge: 结果(1表示POSITIVE，0表示NEGATIVE)
         :param cv: 交叉验证标记(int)
+        :param content_repeat: 内容重复特征。1重复表示预测为0，0不重复表示预测为1，f1可以达到0.89
+                               padding之前做content_repeat
         """
         self.id = _id
         self.title = title
@@ -37,19 +41,16 @@ class ArticleSample(object):
         self.deal_title = deal_title
         self.deal_content = deal_content
         self.deal_judge = deal_judge
+        self.content_repeat = 0
 
-    def __str__(self):
-        info = {
-            'id': self.id,
-            'title': self.title,
-            'content': self.content,
-            'judege': self.judge,
-            'cv': self.cv,
-            'deal_title': self.deal_title,
-            'deal_content': self.deal_content,
-            'deal_judge': self.deal_judge
-        }
-        return json.dumps(info, indent=4)
+    def get_content_repeat(self):
+        sen_dict = {}
+        sen_list = re.split('，|。', self.content)
+        for sen in sen_list:
+            sen_dict[sen] = sen_dict.get(sen, 0) + 1
+            if (sen_dict[sen] > 1 and (len(sen) >= 10)):
+                self.content_repeat = 1
+                return
 
 
 def build_vocab(file_path, voc_path):
@@ -71,9 +72,9 @@ def build_vocab(file_path, voc_path):
             content = line[-2]
             max_title_length = max(max_title_length, len(title))
             max_content_length = max(max_content_length, len(content))
-            # if len(content) == 93749:
-            #     print(title)
-            #     print(content)
+            if len(content) == 93749:
+                print(title)
+                print(content)
             for x in title:
                 if x not in voc:
                     voc_index += 1
@@ -136,12 +137,12 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
                 content = line[-1]
                 judge = ''
 
-            title, content = title[:
-                                   max_title_length], content[:
-                                                              max_content_length]
-            deal_title = [voc[x] if x in voc else 0 for x in title]
+            pad_title, pad_content = title[:
+                                           max_title_length], content[:
+                                                                      max_content_length]
+            deal_title = [voc[x] if x in voc else 0 for x in pad_title]
             deal_title.extend([0] * (max_title_length - len(deal_title)))
-            deal_content = [voc[x] if x in voc else 0 for x in content]
+            deal_content = [voc[x] if x in voc else 0 for x in pad_content]
             deal_content.extend([0] * (max_content_length - len(deal_content)))
             deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
             article = ArticleSample(
@@ -153,6 +154,8 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
                 judge=judge,
                 deal_judge=deal_judge,
                 cv=np.random.randint(0, cv))
+            article.get_content_repeat()
+
             rev.append(article)
 
     print('len rev: ', len(rev))
@@ -163,6 +166,14 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
     # print(rev[0].deal_content)
     # print(rev[0].judge)
     # print(rev[0].deal_judge)
+    cnt, all = 0, 0
+    for x in rev:
+        a = 1 if x.deal_judge == [1, 0] else 0
+        b = x.content_repeat
+        if a + b == 1:
+            cnt += 1
+        all += 1.0
+    print(cnt, all, cnt / all)
     return rev, voc
 
 
@@ -170,5 +181,4 @@ if __name__ == '__main__':
     file_path_train = '../../docs/data/train.tsv'
     file_path_test = '../../docs/data/evaluation.tsv'
     voc_path = '../../docs/data/voc.json'
-    artiles, voc = load_data_cv(file_path_train, voc_path, 'train')
-    print(artiles[0], len(voc))
+    load_data_cv(file_path_train, voc_path, 'train')
