@@ -14,6 +14,7 @@ import os
 import time
 
 import numpy as np
+from math import ceil
 import tensorflow as tf
 import yaml
 from keras import backend as K
@@ -103,15 +104,20 @@ def train(params):
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
+    # add model saver, default save lastest 4 model checkpoints
+    model_name = params['model_dir'] + params['model_name']
+    saver = tf.train.Saver(max_to_keep=4)
+
     with tf.Session(config=config) as sess:
         cnn_rnn = CNNRNN(params)
-        test_writer = tf.summary.FileWriter(log_test_dir, sess.graph)
+        test_writer = tf.summary.FileWriter(log_test_dir)
         train_writer = tf.summary.FileWriter(log_train_dir, sess.graph)
 
         init_op = tf.global_variables_initializer()
         sess.run(init_op)
 
         step = -1
+        best_acc, best_step = 0., 0
         for epoch in range(params['batch_size']):
             # shuffle in each epoch
             train_datas = np.random.permutation(train_datas)
@@ -137,14 +143,13 @@ def train(params):
                         cnn_rnn.content_repeat: repeat
                         # K.learning_phase(): 1
                     })
-                # 每 25个 batch 记录一下train loss
-                if step % 25 == 0:
-                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
-                                              time.localtime())
-                    str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
-                        timestamp, epoch, step, trn_loss, trn_acc)
-                    print(str_loss)
-
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
+                                          time.localtime())
+                str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
+                    timestamp, epoch, step, trn_loss, trn_acc)
+                print(str_loss)
+                # 每 5个 batch 记录一下train loss
+                if step % params['log_train_batch'] == 0:
                     train_writer.add_summary(
                         tf.Summary(value=[
                             tf.Summary.Value(
@@ -153,8 +158,8 @@ def train(params):
                                 tag="accuracy", simple_value=trn_acc)
                         ]),
                         step)
-                # 每 75个 batch 评估一下测试集效果
-                if step % 75 == 0:
+                # 每 70个 batch 评估一下测试集效果
+                if step % params['eval_test_batch'] == 0:
                     # loss and acc on eval dataset
                     tst_loss, tst_acc = do_eval(sess, cnn_rnn, test_datas,
                                                 batch_size)
@@ -173,8 +178,78 @@ def train(params):
                                 tag="accuracy", simple_value=tst_acc)
                         ]),
                         step)
+                    # judge whether test_acc is greater than before
+                    if tst_acc >= best_acc:
+                        best_step = step
+                        best_sess = sess
+                        saver.save(best_sess, model_name + '-tst_acc', global_step=step, write_meta_graph=False)
+                    # 早停止
+                    if step - best_step > params['early_stop_eval_n'] * params['eval_test_batch']:
+                        test_writer.close()
+                        train_writer.close()
+                        # predict and save train data
+                        predict(best_sess, cnn_rnn, datas, batch_size, save_name='train.csv')
+                        # predict and save eval data
+                        eval_public, vocab = load_data_cv(file_path='../docs/data/evaluation_public.tsv',
+                                                    voc_path='../docs/data/voc.json', mode='eval', cv=10)
+                        predict(best_sess, cnn_rnn, eval_public, batch_size, save_name='eval_public.csv')
+                        exit()
+
         test_writer.close()
         train_writer.close()
+        # predict and save train data
+        predict(best_sess, cnn_rnn, datas, batch_size, save_name='train.csv')
+        # predict and save eval data
+        eval_public, vocab = load_data_cv(file_path='../docs/data/evaluation_public.tsv',
+                                          voc_path='../docs/data/voc.json', mode='eval', cv=10)
+        predict(best_sess, cnn_rnn, eval_public, batch_size, save_name='eval_public.csv')
+
+
+
+def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
+    '''
+    predict labels.
+    '''
+    print('start to predict labels.....')
+    K.set_learning_phase(0)
+    number_of_data = len(dataset)
+    number_of_batch = ceil(number_of_data/batch_size)
+    with open('../docs/result/%s' % save_name, 'w') as f:
+        for batch in range(number_of_batch):
+            print('current process {} -- {}'.format(number_of_batch, batch))
+            start = batch_size * batch
+            end = min(batch_size, number_of_data - start)
+
+            curr_titles = [article.deal_title for article in dataset[start:end]]
+            curr_contents = [article.deal_content for article in dataset[start:end]]
+
+            curr_content_repeat = [article.content_repeat for article in dataset[start:end]]
+
+            curr_preds = sess.run(
+                model.prebs,
+                feed_dict={
+                    model.titles: curr_titles,
+                    model.content: curr_contents,
+                    model.content_repeat: curr_content_repeat
+                    # K.learning_phase(): 1
+                })
+
+            # transform [1] -> 'POSITIVE'
+            for i in range(start, end):
+                dataset[i].predict = ['NEGATIVE', 'POSITIVE'][curr_preds[i]]
+                line = '{}\t{}\t{}\t{}\t\{}\n'.format(
+                    dataset[i].id,
+                    dataset[i].title,
+                    dataset[i].content,
+                    dataset[i].judge,
+                    dataset[i].predict
+                )
+                f.write(line)
+
+    K.set_learning_phase(1)
+
+
+def save_model(sess, model)
 
 
 if __name__ == '__main__':
