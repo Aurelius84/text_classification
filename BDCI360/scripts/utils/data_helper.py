@@ -37,6 +37,19 @@ class ArticleSample(object):
         self.deal_content = deal_content
         self.deal_judge = deal_judge
 
+    def __str__(self):
+        info = {
+            'id': self.id,
+            'title': self.title,
+            'content': self.content,
+            'judege': self.judge,
+            'cv': self.cv,
+            'deal_title': self.deal_title,
+            'deal_content': self.content,
+            'deal_judge': self.deal_judge
+        }
+        return json.dump(info, indent=4)
+
 
 def build_vocab(file_path, voc_path):
     """
@@ -156,4 +169,5 @@ if __name__ == '__main__':
     file_path_train = '../../docs/data/train.tsv'
     file_path_test = '../../docs/data/evaluation.tsv'
     voc_path = '../../docs/data/voc.json'
-    load_data_cv(file_path_train, voc_path, 'train')
+    artiles, voc = load_data_cv(file_path_train, voc_path, 'train')
+    print(artiles[0], len(voc))
