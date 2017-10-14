@@ -28,7 +28,7 @@ class ArticleSample(object):
         :param deal_judge: 结果(1表示POSITIVE，0表示NEGATIVE)
         :param cv: 交叉验证标记(int)
         :param content_repeat: 内容重复特征。1重复表示预测为0，0不重复表示预测为1，f1可以达到0.89
-                                编码有部分影响。预测准确之前是0.873, 现在是0.854
+                               padding之前做content_repeat
         """
         self.id = _id
         self.title = title
@@ -133,12 +133,10 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
                 content = line[-1]
                 judge = ''
 
-            title, content = title[:
-                                   max_title_length], content[:
-                                                              max_content_length]
-            deal_title = [voc[x] if x in voc else 0 for x in title]
+            pad_title, pad_content = title[:max_title_length], content[:max_content_length]
+            deal_title = [voc[x] if x in voc else 0 for x in pad_title]
             deal_title.extend([0] * (max_title_length - len(deal_title)))
-            deal_content = [voc[x] if x in voc else 0 for x in content]
+            deal_content = [voc[x] if x in voc else 0 for x in pad_content]
             deal_content.extend([0] * (max_content_length - len(deal_content)))
             deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
             article = ArticleSample(
@@ -151,6 +149,7 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
                 deal_judge=deal_judge,
                 cv=cv)
             article.get_content_repeat()
+
             rev.append(article)
 
     print('len rev: ', len(rev))
