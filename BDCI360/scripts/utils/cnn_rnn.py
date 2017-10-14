@@ -14,16 +14,16 @@ class CNNRNN(object):
 
     def __init__(self, params):
 
-        with tf.device('/gpu；1'):
-            # titles
-            self.titles = tf.placeholder(tf.float32, [None, params['title_dim']], name='titles')
-            # content
-            self.content = tf.placeholder(tf.float32,
-                                          [None, params['content_dim']], name='content')
-            # labels
-            self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
-            # content_repeat
-            self.content_repeat = tf.placeholder(tf.float32, [None, 1], name='content_repeat')
+        # with tf.device('/gpu:1'):
+        # titles
+        self.titles = tf.placeholder(tf.float32, [None, params['title_dim']], name='titles')
+        # content
+        self.content = tf.placeholder(tf.float32,
+                                      [None, params['content_dim']], name='content')
+        # labels
+        self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
+        # content_repeat
+        self.content_repeat = tf.placeholder(tf.float32, [None, 1], name='content_repeat')
 
         # 1. embedding layers
         with tf.device('/cpu:1'):

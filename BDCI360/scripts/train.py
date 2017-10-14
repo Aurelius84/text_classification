@@ -106,10 +106,11 @@ def train(params):
 
     # add model saver, default save lastest 4 model checkpoints
     model_name = params['model_dir'] + params['model_name']
-    saver = tf.train.Saver(max_to_keep=4)
 
     with tf.Session(config=config) as sess:
         cnn_rnn = CNNRNN(params)
+
+        saver = tf.train.Saver(max_to_keep=4)
         test_writer = tf.summary.FileWriter(log_test_dir)
         train_writer = tf.summary.FileWriter(log_train_dir, sess.graph)
 
@@ -118,7 +119,7 @@ def train(params):
 
         step = -1
         best_acc, best_step = 0., 0
-        for epoch in range(params['batch_size']):
+        for epoch in range(params['epoch']):
             # shuffle in each epoch
             train_datas = np.random.permutation(train_datas)
 
@@ -180,9 +181,10 @@ def train(params):
                         step)
                     # judge whether test_acc is greater than before
                     if tst_acc >= best_acc:
+                        best_acc = tst_acc
                         best_step = step
                         best_sess = sess
-                        saver.save(best_sess, model_name + '-tst_acc', global_step=step, write_meta_graph=False)
+                        saver.save(best_sess, model_name + '-%s' % best_acc, global_step=step, write_meta_graph=False)
                     # 早停止
                     if step - best_step > params['early_stop_eval_n'] * params['eval_test_batch']:
                         test_writer.close()
@@ -205,7 +207,6 @@ def train(params):
         predict(best_sess, cnn_rnn, eval_public, batch_size, save_name='eval_public.csv')
 
 
-
 def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
     '''
     predict labels.
@@ -214,11 +215,12 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
     K.set_learning_phase(0)
     number_of_data = len(dataset)
     number_of_batch = ceil(number_of_data/batch_size)
+
     with open('../docs/result/%s' % save_name, 'w') as f:
         for batch in range(number_of_batch):
             print('current process {} -- {}'.format(number_of_batch, batch))
             start = batch_size * batch
-            end = min(batch_size, number_of_data - start)
+            end = start + min(batch_size, number_of_data - start)
 
             curr_titles = [article.deal_title for article in dataset[start:end]]
             curr_contents = [article.deal_content for article in dataset[start:end]]
@@ -226,7 +228,7 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
             curr_content_repeat = [article.content_repeat for article in dataset[start:end]]
 
             curr_preds = sess.run(
-                model.prebs,
+                model.preds,
                 feed_dict={
                     model.titles: curr_titles,
                     model.content: curr_contents,
@@ -236,8 +238,8 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
 
             # transform [1] -> 'POSITIVE'
             for i in range(start, end):
-                dataset[i].predict = ['NEGATIVE', 'POSITIVE'][curr_preds[i]]
-                line = '{}\t{}\t{}\t{}\t\{}\n'.format(
+                dataset[i].predict = ['NEGATIVE', 'POSITIVE'][curr_preds[i - start]]
+                line = '{}\t{}\t{}\t{}\t{}\n'.format(
                     dataset[i].id,
                     dataset[i].title,
                     dataset[i].content,
@@ -247,9 +249,6 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
                 f.write(line)
 
     K.set_learning_phase(1)
-
-
-def save_model(sess, model)
 
 
 if __name__ == '__main__':
