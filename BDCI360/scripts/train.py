@@ -38,13 +38,15 @@ def do_eval(sess, model, eval_data, batch_size):
         curr_labels = [
             article.deal_judge for article in eval_data[start:end]
         ]
+        curr_content_repeat = [article.content_repeat for article in eval_data[start:end]]
 
         curr_loss, curr_probs = sess.run(
             [model.loss, model.probs],
             feed_dict={
                 model.titles: curr_titles,
                 model.content: curr_contents,
-                model.labels: curr_labels
+                model.labels: curr_labels,
+                model.content_repeat: curr_content_repeat
                 # K.learning_phase(): 1
             })
         eval_loss += curr_loss
@@ -72,7 +74,7 @@ def train(params):
     '''
     train and eval.
     '''
-    datas, vocab = load_data_cv(file_path='../docs/data/train_1000.tsv', voc_path='../docs/data/voc.json', mode='train', cv=5)
+    datas, vocab = load_data_cv(file_path='../docs/data/train.tsv', voc_path='../docs/data/voc.json', mode='train', cv=10)
 
     params['title_dim'] = len(datas[0].deal_title)
     params['content_dim'] = len(datas[0].deal_content)
@@ -99,7 +101,7 @@ def train(params):
 
     # 设置gpu限制
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.4
+    config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
     with tf.Session(config=config) as sess:
         cnn_rnn = CNNRNN(params)
@@ -121,6 +123,7 @@ def train(params):
                 titles = [article.deal_title for article in train_datas[start:end]]
                 contents = [article.deal_content for article in train_datas[start:end]]
                 labels = [article.deal_judge for article in train_datas[start:end]]
+                repeat = [article.content_repeat for article in train_datas[start:end]]
 
                 trn_loss, trn_probs, trn_acc, _ = sess.run(
                     [
@@ -130,11 +133,17 @@ def train(params):
                     feed_dict={
                         cnn_rnn.titles: titles,
                         cnn_rnn.content: contents,
-                        cnn_rnn.labels: labels
+                        cnn_rnn.labels: labels,
+                        cnn_rnn.content_repeat: repeat
                         # K.learning_phase(): 1
                     })
-                # 每 5个 batch 评估一下测试集效果
-                if step % 5 == 0:
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
+                                          time.localtime())
+                str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
+                    timestamp, epoch, step, trn_loss, trn_acc)
+                print(str_loss)
+                # 每 20个 batch 评估一下测试集效果
+                if step % 20 == 0:
                     train_writer.add_summary(
                         tf.Summary(value=[
                             tf.Summary.Value(

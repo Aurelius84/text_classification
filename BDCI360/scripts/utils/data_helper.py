@@ -169,7 +169,7 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
     cnt, all = 0, 0
     for x in rev:
         a = 1 if x.deal_judge == [1, 0] else 0
-        b = x.content_repeat
+        b = x.content_repeat[0]
         if a + b == 1:
             cnt += 1
         all += 1.0
