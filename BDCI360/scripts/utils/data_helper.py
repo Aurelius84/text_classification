@@ -42,6 +42,7 @@ class ArticleSample(object):
         self.deal_content = deal_content
         self.deal_judge = deal_judge
         self.content_repeat = 0
+        self.get_content_repeat()
 
     def get_content_repeat(self):
         sen_dict = {}
@@ -154,7 +155,6 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
                 judge=judge,
                 deal_judge=deal_judge,
                 cv=np.random.randint(0, cv))
-            article.get_content_repeat()
 
             rev.append(article)
 
