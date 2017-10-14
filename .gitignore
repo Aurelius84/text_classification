@@ -103,3 +103,4 @@ ENV/
 # mydata
 *.DS_Store
 *.tsv
+events.*
