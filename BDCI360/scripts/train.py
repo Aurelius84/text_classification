@@ -137,13 +137,14 @@ def train(params):
                         cnn_rnn.content_repeat: repeat
                         # K.learning_phase(): 1
                     })
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
-                                          time.localtime())
-                str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
-                    timestamp, epoch, step, trn_loss, trn_acc)
-                print(str_loss)
-                # 每 20个 batch 评估一下测试集效果
-                if step % 20 == 0:
+                # 每 25个 batch 记录一下train loss
+                if step % 25 == 0:
+                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
+                                              time.localtime())
+                    str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
+                        timestamp, epoch, step, trn_loss, trn_acc)
+                    print(str_loss)
+
                     train_writer.add_summary(
                         tf.Summary(value=[
                             tf.Summary.Value(
@@ -152,6 +153,8 @@ def train(params):
                                 tag="accuracy", simple_value=trn_acc)
                         ]),
                         step)
+                # 每 75个 batch 评估一下测试集效果
+                if step % 75 == 0:
                     # loss and acc on eval dataset
                     tst_loss, tst_acc = do_eval(sess, cnn_rnn, test_datas,
                                                 batch_size)

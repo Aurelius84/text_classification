@@ -1,7 +1,7 @@
 # params config
 # iter params
 batch_size:    128
-epoch:         10
+epoch:         5
 learn_rate:    0.01
 model_dir:     '../docs/model/'
 model_name:    'best.h5'
@@ -26,7 +26,7 @@ Conv1D:
         filters:       128
         filter_size:   3
         padding_mode:   'valid'
-        pooling_size:  2 # default 2
+        pooling_size:  3 # default 2
         dropout:       0.3
     layer2:
         filters:       128
