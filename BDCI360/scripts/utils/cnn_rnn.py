@@ -11,24 +11,28 @@ from keras.objectives import categorical_crossentropy, binary_crossentropy
 
 
 class CNNRNN(object):
+
     def __init__(self, params):
-        # titles
-        self.titles = tf.placeholder(tf.float32, [None, params['title_dim']], name='titles')
-        # content
-        self.content = tf.placeholder(tf.float32,
-                                      [None, params['content_dim']], name='content')
-        # labels
-        self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
-        # content_repeat
-        self.content_repeat = tf.placeholder(tf.float32, [None, 1], name='content_repeat')
+
+        with tf.device('/gpu；1'):
+            # titles
+            self.titles = tf.placeholder(tf.float32, [None, params['title_dim']], name='titles')
+            # content
+            self.content = tf.placeholder(tf.float32,
+                                          [None, params['content_dim']], name='content')
+            # labels
+            self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
+            # content_repeat
+            self.content_repeat = tf.placeholder(tf.float32, [None, 1], name='content_repeat')
 
         # 1. embedding layers
-        embedding = Embedding(
-            output_dim=params['embed_dim'],
-            input_dim=params['vocab_size'],
-            input_length=params['content_dim'],
-            name="embedding",
-            mask_zero=False)(self.content)
+        with tf.device('/cpu:1'):
+            embedding = Embedding(
+                output_dim=params['embed_dim'],
+                input_dim=params['vocab_size'],
+                input_length=params['content_dim'],
+                name="embedding",
+                mask_zero=False)(self.content)
 
 
         with tf.device('/gpu:1'):
