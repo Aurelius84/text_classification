@@ -12,6 +12,7 @@ Competition url: http://www.datafountain.cn/#/competitions/276/intro
 import csv
 import json
 import os.path
+import numpy as np
 
 
 class ArticleSample(object):
@@ -151,7 +152,7 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
                 deal_content=deal_content,
                 judge=judge,
                 deal_judge=deal_judge,
-                cv=cv)
+                cv=np.random.randint(0, cv))
             rev.append(article)
 
     print('len rev: ', len(rev))

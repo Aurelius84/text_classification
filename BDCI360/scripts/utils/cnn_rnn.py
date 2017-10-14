@@ -13,12 +13,12 @@ from keras.objectives import categorical_crossentropy, binary_crossentropy
 class CNNRNN(object):
     def __init__(self, params):
         # titles
-        self.titles = tf.placeholder(tf.float32, [None, params['title_dim']])
+        self.titles = tf.placeholder(tf.float32, [None, params['title_dim']], name='titles')
         # content
         self.content = tf.placeholder(tf.float32,
-                                      [None, params['content_dim']])
+                                      [None, params['content_dim']], name='content')
         # labels
-        self.labels = tf.placeholder(tf.float32, [None, params['label_dim']])
+        self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
 
         # 1. embedding layers
         embedding = Embedding(
@@ -40,7 +40,7 @@ class CNNRNN(object):
                 strides=1,
                 bias_regularizer=l2(0.01))(H_input)
             # batch_norm
-            conv_batch_norm = Activation('relu')(BatchNormalization()(conv))
+            conv_batch_norm = Activation('relu')(BatchNormalization(momentum=0.9)(conv))
             H = MaxPool1D(
                 pool_size=params['Conv1D']['layer%s' %
                                            i]['pooling_size'])(conv_batch_norm)
@@ -77,7 +77,7 @@ class CNNRNN(object):
         # 5. calculate loss
         self.preds = tf.argmax(self.probs, axis=1, name="predictions")
         correct_prediction = tf.equal(
-            tf.cast(self.predictions, tf.int32), self.labels)
+            tf.cast(self.preds, tf.int32), tf.cast(self.labels, tf.int32))
         self.accuracy = tf.reduce_mean(
             tf.cast(correct_prediction, tf.float32), name="accuracy")
 

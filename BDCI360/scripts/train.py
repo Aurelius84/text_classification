@@ -18,6 +18,7 @@ import tensorflow as tf
 import yaml
 from keras import backend as K
 from utils.cnn_rnn import CNNRNN
+from utils.data_helper import load_data_cv
 
 
 def do_eval(sess, model, eval_data, batch_size):
@@ -31,10 +32,10 @@ def do_eval(sess, model, eval_data, batch_size):
     for start, end in zip(
             range(0, number_of_data, batch_size),
             range(batch_size, number_of_data, batch_size)):
-        curr_titles = [article.vec for article in eval_data[start:end]]
-        curr_contents = [article.top_label for article in eval_data[start:end]]
+        curr_titles = [article.deal_title for article in eval_data[start:end]]
+        curr_contents = [article.deal_content for article in eval_data[start:end]]
         curr_labels = [
-            article.bottom_label for article in eval_data[start:end]
+            article.deal_judge for article in eval_data[start:end]
         ]
 
         curr_loss, curr_probs = sess.run(
@@ -70,15 +71,16 @@ def train(params):
     '''
     train and eval.
     '''
-    datas, vocab = build_data_cv('../docs/HML_JD_ALL.new.dat', cv=5)
+    datas, vocab = load_data_cv(file_path='../docs/data/train_1000.tsv', voc_path='../docs/data/voc.json', mode='train', cv=5)
 
-    params['title_dim'] = 10
-    params['content_dim'] = 1000
+    params['title_dim'] = len(datas[0].deal_title)
+    params['content_dim'] = len(datas[0].deal_content)
+    params['vocab_size'] = len(vocab)
     # check params on terminal
     print(json.dumps(params, indent=4))
 
-    test_datas = filter(lambda data: data.cv_n == 1, datas)
-    train_datas = filter(lambda data: data.cv_n != 1, datas)
+    test_datas = list(filter(lambda data: data.cv == 1, datas))
+    train_datas = list(filter(lambda data: data.cv != 1, datas))
 
     print('train dataset: {}'.format(len(train_datas)))
     print('test dataset: {}'.format(len(test_datas)))
@@ -110,9 +112,9 @@ def train(params):
                     range(0, number_of_training_data, batch_size),
                     range(batch_size, number_of_training_data, batch_size)):
                 step += 1
-                titles = [hml.vec for hml in train_datas[start:end]]
-                contents = [hml.top_label for hml in train_datas[start:end]]
-                labels = [hml.bottom_label for hml in train_datas[start:end]]
+                titles = [article.deal_title for article in train_datas[start:end]]
+                contents = [article.deal_content for article in train_datas[start:end]]
+                labels = [article.deal_judge for article in train_datas[start:end]]
 
                 trn_loss, trn_probs, trn_acc, _ = sess.run(
                     [
@@ -159,6 +161,6 @@ def train(params):
 
 if __name__ == '__main__':
     # load params
-    params = yaml.load(open('./utils/params', 'r'))
+    params = yaml.load(open('./utils/params.yaml', 'r'))
 
     train(params)
