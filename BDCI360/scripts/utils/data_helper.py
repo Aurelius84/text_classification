@@ -72,9 +72,9 @@ def build_vocab(file_path, voc_path):
             content = line[-2]
             max_title_length = max(max_title_length, len(title))
             max_content_length = max(max_content_length, len(content))
-            if len(content) == 93749:
-                print(title)
-                print(content)
+            # if len(content) == 93749:
+            #     print(title)
+            #     print(content)
             for x in title:
                 if x not in voc:
                     voc_index += 1
