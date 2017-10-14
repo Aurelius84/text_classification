@@ -4,7 +4,7 @@ Competition url: http://www.datafountain.cn/#/competitions/276/intro
 """
 import tensorflow as tf
 from keras.layers import (GRU, Activation, BatchNormalization, Conv1D, Dense,
-                          Dropout, Embedding, MaxPool1D, ActivityRegularization)
+                          Dropout, Embedding, MaxPool1D, ActivityRegularization, concatenate)
 from keras.layers.wrappers import Bidirectional
 from keras.regularizers import l2
 from keras.objectives import categorical_crossentropy, binary_crossentropy
@@ -19,6 +19,8 @@ class CNNRNN(object):
                                       [None, params['content_dim']], name='content')
         # labels
         self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
+        # content_repeat
+        self.content_repeat = tf.placeholder(tf.float32, [None, 1], name='content_repeat')
 
         # 1. embedding layers
         embedding = Embedding(
@@ -55,7 +57,10 @@ class CNNRNN(object):
                 dropout=params['RNN']['dropout'],
                 recurrent_dropout=params['RNN']['recurrent_dropout']))(H)
 
-        # 4. predict probs for labels
+        # 4. consider content_repeat feature
+        combine_layer = concatenate([rnn_cell, self.content_repeat], name='combine_layer')
+
+        # 5. predict probs for labels
         kwargs = params['label']['kwargs'] if 'kwargs' in params['label'] else {}
         if 'W_regularizer' in kwargs:
             kwargs['W_regularizer'] = l2(kwargs['W_regularizer'])
@@ -64,7 +69,7 @@ class CNNRNN(object):
             # activation='softmax',
             name='label_probs',
             bias_regularizer=l2(0.01),
-            **kwargs)(rnn_cell)
+            **kwargs)(combine_layer)
         # batch_norm
         if 'batch_norm' in params['label']:
             self.probs = BatchNormalization(**params['label']['batch_norm'])(self.probs)
@@ -74,7 +79,7 @@ class CNNRNN(object):
             self.probs = ActivityRegularization(
                 name='label_activity_reg', **params['label']['activity_reg'])(self.probs)
 
-        # 5. calculate loss
+        # 6. calculate loss
         self.preds = tf.argmax(self.probs, axis=1, name="predictions")
         correct_prediction = tf.equal(
             tf.cast(self.preds, tf.int32), tf.cast(tf.argmax(self.labels, axis=1), tf.int32))
@@ -86,6 +91,6 @@ class CNNRNN(object):
         else:
             self.loss = tf.reduce_mean(categorical_crossentropy(self.labels, self.probs), name='loss')
 
-        # 6. set train_op
+        # 7. set train_op
         self.train_op = tf.train.RMSPropOptimizer(params['learn_rate']).minimize(
             self.loss)

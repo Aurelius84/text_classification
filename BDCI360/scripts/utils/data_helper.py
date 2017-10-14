@@ -41,7 +41,7 @@ class ArticleSample(object):
         self.deal_title = deal_title
         self.deal_content = deal_content
         self.deal_judge = deal_judge
-        self.content_repeat = 0
+        self.content_repeat = [0]
         self.get_content_repeat()
 
     def get_content_repeat(self):
@@ -50,7 +50,7 @@ class ArticleSample(object):
         for sen in sen_list:
             sen_dict[sen] = sen_dict.get(sen, 0) + 1
             if (sen_dict[sen] > 1 and (len(sen) >= 10)):
-                self.content_repeat = 1
+                self.content_repeat = [1]
                 return
 
 

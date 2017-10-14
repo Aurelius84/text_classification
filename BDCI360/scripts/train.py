@@ -72,7 +72,7 @@ def train(params):
     '''
     train and eval.
     '''
-    datas, vocab = load_data_cv(file_path='../docs/data/train.tsv', voc_path='../docs/data/voc.json', mode='train', cv=5)
+    datas, vocab = load_data_cv(file_path='../docs/data/train_1000.tsv', voc_path='../docs/data/voc.json', mode='train', cv=5)
 
     params['title_dim'] = len(datas[0].deal_title)
     params['content_dim'] = len(datas[0].deal_content)
@@ -96,7 +96,12 @@ def train(params):
     os.mkdir(log_train_dir)
 
     batch_size = params['batch_size']
-    with tf.Session() as sess:
+
+    # 设置gpu限制
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.4
+
+    with tf.Session(config=config) as sess:
         cnn_rnn = CNNRNN(params)
         test_writer = tf.summary.FileWriter(log_test_dir, sess.graph)
         train_writer = tf.summary.FileWriter(log_train_dir, sess.graph)
