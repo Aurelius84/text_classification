@@ -110,7 +110,7 @@ def train(params):
     batch_size = params['batch_size']
 
     # 设置gpu限制
-    config = tf.ConfigProto()
+    config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
     # add model saver, default save lastest 4 model checkpoints
@@ -205,7 +205,7 @@ def train(params):
                             best_sess,
                             model_name + '-%s' % tst_acc,
                             global_step=step,
-                            write_meta_graph=not bool(best_acc))
+                            write_meta_graph=True)
                         best_acc = tst_acc
                     # 早停止
                     if step - best_step > params['early_stop_eval_n'] * params['eval_test_batch']:
@@ -307,7 +307,7 @@ def load_predict(model_meta_path,
     :return:
     '''
     # 动态申请gpu，用多少申请多少
-    config = tf.ConfigProto()
+    config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
 
     with tf.Session(config=config) as sess:
@@ -347,12 +347,12 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params)
+    # train(params)
 
     # 加载模型，进行数据预测
-    # load_predict(
-    #     model_meta_path='../docs/model/best.meta',
-    #     predict_path='../docs/data/evaluation_public.tsv',
-    #     save_name='eval_public.csv',
-    #     mode='eval',
-    #     batch_size=128)
+    load_predict(
+        model_meta_path='../docs/model/best-0.906323877069-1750.meta',
+        predict_path='../docs/data/evaluation_public.tsv',
+        save_name='eval_public.csv',
+        mode='eval',
+        batch_size=128)
