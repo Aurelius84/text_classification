@@ -4,7 +4,7 @@ batch_size:    128
 epoch:         6
 learn_rate:    0.01
 log_train_batch:  10  # 每隔几个batch在tensorboard里记录训练信息
-eval_test_batch:  70  # 每隔几个batch评估一下切分出来的测试集
+eval_test_batch:  50  # 每隔几个batch评估一下切分出来的测试集
 early_stop_eval_n:  8  # 每隔几次评估后，eval_acc不出现增长就早停止
 model_dir:     '../docs/model/'
 model_name:    'best'
@@ -30,20 +30,20 @@ Conv1D:
         filter_size:   3
         padding_mode:   'valid'
         pooling_size:  3 # default 2
-        dropout:       0.5
+        dropout:       0.3
     layer2:
         filters:       128
         filter_size:   3
         padding_mode:   'valid'
-        pooling_size:  2 # default 2
-        dropout:      0.5
+        pooling_size:  3 # default 2
+        dropout:      0.3
     layer3:
         filters:       128
         filter_size:   3
         padding_mode:   'valid'
-        pooling_size:  3 # default 2
-        dropout:      0.5
+        pooling_size:  2 # default 2
+        dropout:      0.3
 RNN:
-    cell: 128
-    dropout: 0.5  # default 0.
+    cell: 96
+    dropout: 0.3  # default 0.
     recurrent_dropout: 0.3  # default 0.

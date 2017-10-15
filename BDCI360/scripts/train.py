@@ -347,12 +347,12 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    # train(params)
+    train(params)
 
     # 加载模型，进行数据预测
-    load_predict(
-        model_meta_path='../docs/model/best-0.906323877069-1750.meta',
-        predict_path='../docs/data/evaluation_public.tsv',
-        save_name='eval_public.csv',
-        mode='eval',
-        batch_size=128)
+    # load_predict(
+    #     model_meta_path='../docs/model/best-0.906323877069-1750.meta',
+    #     predict_path='../docs/data/evaluation_public.tsv',
+    #     save_name='eval_public.csv',
+    #     mode='eval',
+    #     batch_size=128)
