@@ -13,6 +13,7 @@ import csv
 import json
 import os.path
 import re
+import pandas as pd
 
 import numpy as np
 
@@ -67,24 +68,26 @@ def build_vocab(file_path, voc_path):
     voc_index = 0
     max_title_length = 0
     max_content_length = 0
-    with open(file_path, encoding='utf-8') as tsvfile:
-        tsvreader = csv.reader(tsvfile, delimiter="\t")
-        for line in tsvreader:
-            title = line[1] if len(line) == 4 else ''
-            content = line[-2]
-            max_title_length = max(max_title_length, len(title))
-            max_content_length = max(max_content_length, len(content))
-            # if len(content) == 93749:
-            #     print(title)
-            #     print(content)
-            for x in title:
-                if x not in voc:
-                    voc_index += 1
-                    voc[x] = voc_index
-            for x in content:
-                if x not in voc:
-                    voc_index += 1
-                    voc[x] = voc_index
+
+    train = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
+                          engine='python')
+
+    for title, content in zip(train[1],train[2]):
+        title,content = str(title),str(content)
+        max_title_length = max(max_title_length, len(title))
+        max_content_length = max(max_content_length, len(content))
+        # if len(content) == 93749:
+        #     print(title)
+        #     print(content)
+        for x in title:
+            if x not in voc:
+                voc_index += 1
+                voc[x] = voc_index
+        for x in content:
+            if x not in voc:
+                voc_index += 1
+                voc[x] = voc_index
+
     print('build vocab done')
     voc_dict = {
         'voc': voc,
@@ -120,44 +123,37 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
     print('max_title_length: ', max_title_length)
     print('max_content_length: ', max_content_length)
 
+    df = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
+                          engine='python')
+    if mode != 'train':
+        df[3] = ['']*len(df)
     print('load data...')
     cnt = 0
-    with open(file_path, encoding='utf-8') as tsvfile:
-        tsvreader = csv.reader(tsvfile, delimiter="\t")
-        for line in tsvreader:
-            cnt += 1
-            if cnt % 20000 == 0:
-                print('load data:...', cnt)
-            if mode == 'train':
-                _id = line[0]
-                title = line[1] if len(line) == 4 else ''
-                content = line[-2]
-                judge = line[-1]
-            else:
-                _id = line[0]
-                title = line[1] if len(line) == 3 else ''
-                content = line[-1]
-                judge = ''
+    for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
+        title,content = str(title),str(content)
+        cnt += 1
+        if cnt % 20000 == 0:
+            print('load data:...', cnt)
 
-            pad_title, pad_content = title[:
-                                           max_title_length], content[:
-                                                                      max_content_length]
-            deal_title = [voc[x] if x in voc else 0 for x in pad_title]
-            deal_title.extend([0] * (max_title_length - len(deal_title)))
-            deal_content = [voc[x] if x in voc else 0 for x in pad_content]
-            deal_content.extend([0] * (max_content_length - len(deal_content)))
-            deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
-            article = ArticleSample(
-                _id=_id,
-                title=title,
-                deal_title=deal_title,
-                content=content,
-                deal_content=deal_content,
-                judge=judge,
-                deal_judge=deal_judge,
-                cv=np.random.randint(0, cv))
+        pad_title, pad_content = title[:
+                                       max_title_length], content[:
+                                                                  max_content_length]
+        deal_title = [voc[x] if x in voc else 0 for x in pad_title]
+        deal_title.extend([0] * (max_title_length - len(deal_title)))
+        deal_content = [voc[x] if x in voc else 0 for x in pad_content]
+        deal_content.extend([0] * (max_content_length - len(deal_content)))
+        deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
+        article = ArticleSample(
+            _id=_id,
+            title=title,
+            deal_title=deal_title,
+            content=content,
+            deal_content=deal_content,
+            judge=judge,
+            deal_judge=deal_judge,
+            cv=np.random.randint(0, cv))
 
-            rev.append(article)
+        rev.append(article)
 
     print('len rev: ', len(rev))
     # print('rev 0...')
@@ -180,6 +176,7 @@ def load_data_cv(file_path, voc_path, mode, cv=5):
 
 if __name__ == '__main__':
     file_path_train = '../../docs/data/train.tsv'
-    file_path_test = '../../docs/data/evaluation.tsv'
+    file_path_test = '../../docs/data/evaluation_public.tsv'
     voc_path = '../../docs/data/voc.json'
     load_data_cv(file_path_train, voc_path, 'train')
+    load_data_cv(file_path_test, voc_path, 'eval')
