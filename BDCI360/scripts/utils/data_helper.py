@@ -63,7 +63,7 @@ def build_vocab(file_path, voc_path):
     :return:
     """
     print('build vocab...')
-    voc = {}
+    voc = {'<s>': 0}
     voc_index = 0
     max_title_length = 0
     max_content_length = 0
