@@ -1,7 +1,7 @@
 # params config
 # iter params
 batch_size:    128
-epoch:         5
+epoch:         6
 learn_rate:    0.01
 log_train_batch:  10  # 每隔几个batch在tensorboard里记录训练信息
 eval_test_batch:  70  # 每隔几个batch评估一下切分出来的测试集
@@ -30,20 +30,20 @@ Conv1D:
         filter_size:   3
         padding_mode:   'valid'
         pooling_size:  3 # default 2
-        dropout:       0.3
+        dropout:       0.5
     layer2:
         filters:       128
         filter_size:   3
         padding_mode:   'valid'
         pooling_size:  2 # default 2
-        dropout:      0.3
+        dropout:      0.5
     layer3:
         filters:       128
         filter_size:   3
         padding_mode:   'valid'
-        pooling_size:  2 # default 2
-        dropout:      0.3
+        pooling_size:  3 # default 2
+        dropout:      0.5
 RNN:
-    cell: 96
-    dropout: 0.3  # default 0.
+    cell: 128
+    dropout: 0.5  # default 0.
     recurrent_dropout: 0.3  # default 0.
