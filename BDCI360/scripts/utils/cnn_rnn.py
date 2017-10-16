@@ -22,8 +22,8 @@ class CNNRNN(object):
                                       [None, params['content_dim']], name='content')
         # labels
         self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
-        # content_repeat
-        self.content_repeat = tf.placeholder(tf.float32, [None, 1], name='content_repeat')
+        # combine_feature
+        self.combine_feature = tf.placeholder(tf.float32, [None, 1], name='combine_feature')
 
         # 1. embedding layers
         # with tf.device('/cpu:0'):
@@ -64,8 +64,8 @@ class CNNRNN(object):
                 dropout=params['RNN']['dropout'],
                 recurrent_dropout=params['RNN']['recurrent_dropout']))(H)
 
-        # 4. consider content_repeat feature
-        combine_layer = concatenate([rnn_cell, self.content_repeat], name='combine_layer')
+        # 4. consider combine_feature feature
+        combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')
 
         # 5. predict probs for labels
         kwargs = params['label']['kwargs'] if 'kwargs' in params['label'] else {}

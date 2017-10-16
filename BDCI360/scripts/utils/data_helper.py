@@ -42,10 +42,13 @@ class ArticleSample(object):
         self.deal_title = deal_title
         self.deal_content = deal_content
         self.deal_judge = deal_judge
-        self.content_repeat = [0]
+        self.content_repeat = 0
         self.real_len = len(self.content)
         self.predict = ''
         self.get_content_repeat()
+
+        # 各种单个特征，如重复、句子长度组合的特征，放在预测的前一层
+        self.combine_feature = [self.real_len, self.content_repeat]
 
     def get_content_repeat(self):
         sen_dict = {}
@@ -53,8 +56,9 @@ class ArticleSample(object):
         for sen in sen_list:
             sen_dict[sen] = sen_dict.get(sen, 0) + 1
             if (sen_dict[sen] > 1 and (len(sen) >= 10)):
-                self.content_repeat = [1]
+                self.content_repeat = 1
                 return
+
 
 
 def build_vocab(file_path, voc_path):
