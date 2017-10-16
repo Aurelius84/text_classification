@@ -1,11 +1,11 @@
 # params config
 # iter params
 batch_size:    128
-epoch:         30
+epoch:        8
 learn_rate:    0.01
 log_train_batch:  10  # 每隔几个batch在tensorboard里记录训练信息
 eval_test_batch:  50  # 每隔几个batch评估一下切分出来的测试集
-early_stop_eval_n:  8  # 每隔几次评估后，eval_acc不出现增长就早停止
+early_stop_eval_n:  80  # 每隔几次评估后，eval_acc不出现增长就早停止
 model_dir:     '../docs/model/'
 model_name:    'best'
 # model_type:    'CNN-non-static' # only CNN-static, CNN-non-static, CNN-rand valiable
@@ -28,20 +28,20 @@ label:
 Conv1D:
     layer1:
         filters:       96
-        filter_size:   3
-        padding_mode:   'valid'
-        pooling_size:  3 # default 2
+        filter_size:    9
+        padding_mode:   'same'
+        pooling_size:  5 # default 2
         dropout:       0.3
     layer2:
         filters:       96
-        filter_size:   3
-        padding_mode:   'valid'
+        filter_size:   7
+        padding_mode:   'same'
         pooling_size:  3 # default 2
         dropout:      0.3
     layer3:
         filters:       96
-        filter_size:   3
-        padding_mode:   'valid'
+        filter_size:   5
+        padding_mode:   'same'
         pooling_size:  2 # default 2
         dropout:      0.3
 RNN:
