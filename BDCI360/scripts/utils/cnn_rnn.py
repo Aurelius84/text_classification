@@ -33,6 +33,7 @@ class CNNRNN(object):
             input_length=params['content_dim'],
             name="embedding",
             mask_zero=False)(self.content)
+        embedding = BatchNormalization(momentum=0.9)(embedding)
 
 
         # with tf.device('/cpu:0'):
