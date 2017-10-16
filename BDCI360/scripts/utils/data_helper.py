@@ -45,11 +45,13 @@ class ArticleSample(object):
         self.content_repeat = 0
         # 真实长度对1000做归一
         self.real_len = len(self.content) / 1000.
+        # 是否为短文本，字长小于160的均判断为短文本
+        self.is_short = 1 if len(self.content) <= 160 else 0
         self.predict = ''
         self.get_content_repeat()
 
         # 各种单个特征，如重复、句子长度组合的特征，放在预测的前一层
-        self.combine_feature = [self.real_len, self.content_repeat]
+        self.combine_feature = [self.real_len, self.content_repeat, self.real_len]
 
     def get_content_repeat(self):
         sen_dict = {}
