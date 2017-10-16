@@ -115,7 +115,9 @@ def train(params):
     config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
     # add model saver, default save lastest 4 model checkpoints
-    model_name = params['model_dir'] + params['model_name']
+    model_dir = params['model_dir'] + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
+    os.makedirs(model_dir)
+    model_name = model_dir + '/' + params['model_name']
 
     with tf.Session(config=config) as sess, tf.device('/gpu:1'):
         cnn_rnn = CNNRNN(params)
@@ -313,7 +315,7 @@ def load_predict(model_meta_path,
 
     with tf.Session(config=config) as sess:
         saver = tf.train.import_meta_graph(model_meta_path)
-        saver.restore(sess, tf.train.latest_checkpoint('../docs/model/'))
+        saver.restore(sess, tf.train.latest_checkpoint(os.path.dirname(model_meta_path)))
 
         # load graph
         graph = tf.get_default_graph()
