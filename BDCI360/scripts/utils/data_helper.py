@@ -43,6 +43,7 @@ class ArticleSample(object):
         self.deal_content = deal_content
         self.deal_judge = deal_judge
         self.content_repeat = [0]
+        self.real_len = len(self.content)
         self.predict = ''
         self.get_content_repeat()
 
