@@ -43,7 +43,8 @@ class ArticleSample(object):
         self.deal_content = deal_content
         self.deal_judge = deal_judge
         self.content_repeat = 0
-        self.real_len = len(self.content)
+        # 真实长度对1000做归一
+        self.real_len = len(self.content) / 1000.
         self.predict = ''
         self.get_content_repeat()
 
