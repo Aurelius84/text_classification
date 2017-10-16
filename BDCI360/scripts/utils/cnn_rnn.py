@@ -23,7 +23,7 @@ class CNNRNN(object):
         # labels
         self.labels = tf.placeholder(tf.float32, [None, params['label']['dim']], name='labels')
         # combine_feature
-        self.combine_feature = tf.placeholder(tf.float32, [None, 1], name='combine_feature')
+        self.combine_feature = tf.placeholder(tf.float32, [None, params['combine_dim']], name='combine_feature')
 
         # 1. embedding layers
         # with tf.device('/cpu:0'):

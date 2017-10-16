@@ -1,7 +1,7 @@
 # params config
 # iter params
 batch_size:    128
-epoch:         6
+epoch:         30
 learn_rate:    0.01
 log_train_batch:  10  # 每隔几个batch在tensorboard里记录训练信息
 eval_test_batch:  50  # 每隔几个batch评估一下切分出来的测试集
@@ -13,6 +13,7 @@ model_name:    'best'
 # data prarms
 title_dim:  0 # just placeholder
 content_dim:  0 # just placeholder
+combine_dim:  0 # just placeholder
 vocab_size: 0 # just placeholder
 embed_dim:  100
 label:
@@ -26,24 +27,24 @@ label:
 # layer params
 Conv1D:
     layer1:
-        filters:       128
+        filters:       96
         filter_size:   3
         padding_mode:   'valid'
         pooling_size:  3 # default 2
         dropout:       0.3
     layer2:
-        filters:       128
+        filters:       96
         filter_size:   3
         padding_mode:   'valid'
         pooling_size:  3 # default 2
         dropout:      0.3
     layer3:
-        filters:       128
+        filters:       96
         filter_size:   3
         padding_mode:   'valid'
         pooling_size:  2 # default 2
         dropout:      0.3
 RNN:
     cell: 96
-    dropout: 0.3  # default 0.
-    recurrent_dropout: 0.3  # default 0.
+    dropout: 0.2  # default 0.
+    recurrent_dropout: 0.1  # default 0.

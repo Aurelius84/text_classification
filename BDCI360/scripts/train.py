@@ -42,8 +42,8 @@ def do_eval(sess, model, eval_data, batch_size):
             article.deal_content for article in eval_data[start:end]
         ]
         curr_labels = [article.deal_judge for article in eval_data[start:end]]
-        curr_content_repeat = [
-            article.content_repeat for article in eval_data[start:end]
+        curr_combine_feature = [
+            article.combine_feature for article in eval_data[start:end]
         ]
 
         curr_loss, curr_probs = sess.run(
@@ -52,7 +52,7 @@ def do_eval(sess, model, eval_data, batch_size):
                 model.titles: curr_titles,
                 model.content: curr_contents,
                 model.labels: curr_labels,
-                model.content_repeat: curr_content_repeat
+                model.combine_feature: curr_combine_feature
                 # K.learning_phase(): 1
             })
         eval_loss += curr_loss
@@ -88,6 +88,7 @@ def train(params):
 
     params['title_dim'] = len(datas[0].deal_title)
     params['content_dim'] = len(datas[0].deal_content)
+    params['combine_dim'] = len(datas[0].combine_feature)
     params['vocab_size'] = len(vocab)
     # check params on terminal
     print(json.dumps(params, indent=4))
@@ -145,8 +146,8 @@ def train(params):
                 labels = [
                     article.deal_judge for article in train_datas[start:end]
                 ]
-                repeat = [
-                    article.content_repeat
+                combine_feature = [
+                    article.combine_feature
                     for article in train_datas[start:end]
                 ]
 
@@ -159,7 +160,7 @@ def train(params):
                         cnn_rnn.titles: titles,
                         cnn_rnn.content: contents,
                         cnn_rnn.labels: labels,
-                        cnn_rnn.content_repeat: repeat
+                        cnn_rnn.combine_feature: combine_feature
                         # K.learning_phase(): 1
                     })
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
@@ -272,8 +273,8 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
                 article.deal_content for article in dataset[start:end]
             ]
 
-            curr_content_repeat = [
-                article.content_repeat for article in dataset[start:end]
+            curr_combine_feature = [
+                article.combine_feature for article in dataset[start:end]
             ]
 
             curr_preds = sess.run(
@@ -281,7 +282,7 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
                 feed_dict={
                     model.titles: curr_titles,
                     model.content: curr_contents,
-                    model.content_repeat: curr_content_repeat
+                    model.combine_feature: curr_combine_feature
                     # K.learning_phase(): 1
                 })
 
@@ -320,11 +321,11 @@ def load_predict(model_meta_path,
         # get input placeholder
         tf_title = graph.get_tensor_by_name('titles:0')
         tf_content = graph.get_tensor_by_name('content:0')
-        tf_content_repeat = graph.get_tensor_by_name('content_repeat:0')
+        tf_combine_feature = graph.get_tensor_by_name('combine_feature:0')
 
         tf_preds = graph.get_tensor_by_name('predictions:0')
 
-        model = TFModel(tf_title, tf_content, tf_content_repeat, tf_preds)
+        model = TFModel(tf_title, tf_content, tf_combine_feature, tf_preds)
 
         # predict and save eval data
         datas, vocab = load_data_cv(
@@ -336,10 +337,10 @@ def load_predict(model_meta_path,
 
 
 class TFModel(object):
-    def __init__(self, title, content, content_repeat, preds):
+    def __init__(self, title, content, combine_feature, preds):
         self.titles = title
         self.content = content
-        self.content_repeat = content_repeat
+        self.combine_feature = combine_feature
         self.preds = preds
 
 
