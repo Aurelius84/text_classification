@@ -12,6 +12,7 @@ Competition url: http://www.datafountain.cn/#/competitions/276/intro
 import csv
 import json
 import jieba
+import jieba.posseg as pseg
 import os.path
 import re
 import pandas as pd
@@ -93,8 +94,16 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
             if x not in char_voc:
                 char_voc_index += 1
                 char_voc[x] = char_voc_index
-        word_title = list(filter(lambda x:x!=' ',[w for w in jieba.cut(str(title).lower().strip())]))
-        word_content = list(filter(lambda x: x != ' ', [w for w in jieba.cut(str(content).lower().strip())]))
+        words = pseg.cut(str(title).lower().strip())
+        word_title = []
+        for w in words:
+            if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
+                word_title.append(w.word)
+        words = pseg.cut(str(content).lower().strip())
+        word_content = []
+        for w in words:
+            if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
+                word_content.append(w.word)
         word_max_title_length = max(word_max_title_length,len(word_title))
         word_max_content_length = max(word_max_content_length, len(word_content))
         word_content.extend(word_title)
@@ -148,7 +157,7 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         word_voc, word_max_title_length, word_max_content_length\
             = build_vocab(file_path, char_voc_path, word_voc_path)
     char_max_content_length = min(char_max_content_length, 1000)
-    word_max_content_length = min(word_max_content_length, 1000)
+    word_max_content_length = min(word_max_content_length, 200)
     print('len char voc: ', len(char_voc))
     print('char_max_title_length: ', char_max_title_length)
     print('char_max_content_length: ', char_max_content_length)
@@ -168,7 +177,13 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         if cnt % 20000 == 0:
             print('load data:...', cnt)
 
-        content_word = list(filter(lambda x: x != ' ', [w for w in jieba.cut(str(content).lower().strip())]))
+        words = pseg.cut(str(content).lower().strip())
+        content_word = []
+        for w in words:
+            if w.flag in ['n','nr','ns','nt','nz']:
+                content_word.append(w.word)
+        print('content word...')
+        print(content_word)
         pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
         pad_content_word = content_word[:word_max_content_length]
         deal_title = [char_voc[x] if x in char_voc else 0 for x in pad_title]
@@ -190,6 +205,7 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
             cv=np.random.randint(0, cv))
 
         rev.append(article)
+        break
 
     print('len rev: ', len(rev))
     # print('rev 0...')

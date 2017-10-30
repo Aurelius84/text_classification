@@ -240,20 +240,20 @@ def train(params):
         test_writer.close()
         train_writer.close()
         # predict and save train data
-        predict(best_sess, cnn_rnn, datas, batch_size, save_name='train.csv')
+        # predict(best_sess, cnn_rnn, datas, batch_size, save_name='train.csv')
         # predict and save eval data
-        eval_public, char_vocab,word_vocab = load_data_cv(
-            file_path='../docs/data/evaluation_public.tsv',
-            char_voc_path='../docs/data/char_voc.json',
-            word_voc_path='../docs/data/word_voc.json',
-            mode='eval',
-            cv=10)
-        predict(
-            best_sess,
-            cnn_rnn,
-            eval_public,
-            batch_size,
-            save_name='eval_public.csv')
+        # eval_public, char_vocab,word_vocab = load_data_cv(
+        #     file_path='../docs/data/evaluation_public.tsv',
+        #     char_voc_path='../docs/data/char_voc.json',
+        #     word_voc_path='../docs/data/word_voc.json',
+        #     mode='eval',
+        #     cv=10)
+        # predict(
+        #     best_sess,
+        #     cnn_rnn,
+        #     eval_public,
+        #     batch_size,
+        #     save_name='eval_public.csv')
 
 
 def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
