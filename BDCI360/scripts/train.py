@@ -39,7 +39,7 @@ def do_eval(sess, model, eval_data, batch_size):
 
         curr_titles = [article.deal_title for article in eval_data[start:end]]
         curr_contents = [
-            article.deal_content for article in eval_data[start:end]
+            article.word_content for article in eval_data[start:end]
         ]
         curr_labels = [article.deal_judge for article in eval_data[start:end]]
         curr_combine_feature = [
@@ -80,16 +80,17 @@ def train(params):
     '''
     train and eval.
     '''
-    datas, vocab = load_data_cv(
+    datas, char_vocab, word_vocab = load_data_cv(
         file_path='../docs/data/train.tsv',
-        voc_path='../docs/data/voc.json',
+        char_voc_path='../docs/data/char_voc.json',
+        word_voc_path='../docs/data/word_voc.json',
         mode='train',
         cv=10)
 
     params['title_dim'] = len(datas[0].deal_title)
-    params['content_dim'] = len(datas[0].deal_content)
+    params['content_dim'] = len(datas[0].word_content)
     params['combine_dim'] = len(datas[0].combine_feature)
-    params['vocab_size'] = len(vocab)
+    params['vocab_size'] = len(word_vocab)
     # check params on terminal
     print(json.dumps(params, indent=4))
 
@@ -143,7 +144,7 @@ def train(params):
                     article.deal_title for article in train_datas[start:end]
                 ]
                 contents = [
-                    article.deal_content for article in train_datas[start:end]
+                    article.word_content for article in train_datas[start:end]
                 ]
                 labels = [
                     article.deal_judge for article in train_datas[start:end]
@@ -222,9 +223,10 @@ def train(params):
                             batch_size,
                             save_name='train.csv')
                         # predict and save eval data
-                        eval_public, vocab = load_data_cv(
+                        eval_public, char_vocab, word_vocab = load_data_cv(
                             file_path='../docs/data/evaluation_public.tsv',
-                            voc_path='../docs/data/voc.json',
+                            char_voc_path='../docs/data/char_voc.json',
+                            word_voc_path='../docs/data/word_voc.json',
                             mode='eval',
                             cv=10)
                         predict(
@@ -238,19 +240,20 @@ def train(params):
         test_writer.close()
         train_writer.close()
         # predict and save train data
-        predict(best_sess, cnn_rnn, datas, batch_size, save_name='train.csv')
+        # predict(best_sess, cnn_rnn, datas, batch_size, save_name='train.csv')
         # predict and save eval data
-        eval_public, vocab = load_data_cv(
-            file_path='../docs/data/evaluation_public.tsv',
-            voc_path='../docs/data/voc.json',
-            mode='eval',
-            cv=10)
-        predict(
-            best_sess,
-            cnn_rnn,
-            eval_public,
-            batch_size,
-            save_name='eval_public.csv')
+        # eval_public, char_vocab,word_vocab = load_data_cv(
+        #     file_path='../docs/data/evaluation_public.tsv',
+        #     char_voc_path='../docs/data/char_voc.json',
+        #     word_voc_path='../docs/data/word_voc.json',
+        #     mode='eval',
+        #     cv=10)
+        # predict(
+        #     best_sess,
+        #     cnn_rnn,
+        #     eval_public,
+        #     batch_size,
+        #     save_name='eval_public.csv')
 
 
 def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
@@ -272,7 +275,7 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
                 article.deal_title for article in dataset[start:end]
             ]
             curr_contents = [
-                article.deal_content for article in dataset[start:end]
+                article.word_content for article in dataset[start:end]
             ]
 
             curr_combine_feature = [
@@ -330,9 +333,10 @@ def load_predict(model_meta_path,
         model = TFModel(tf_title, tf_content, tf_combine_feature, tf_preds)
 
         # predict and save eval data
-        datas, vocab = load_data_cv(
+        datas, char_vocab,word_vocab = load_data_cv(
             file_path=predict_path,
-            voc_path='../docs/data/voc.json',
+            char_voc_path='../docs/data/char_voc.json',
+            word_voc_path='../docs/data/word_voc.json',
             mode=mode,
             cv=10)
         predict(sess, model, datas, batch_size, save_name=save_name)

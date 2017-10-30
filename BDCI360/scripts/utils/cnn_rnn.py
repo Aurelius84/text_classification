@@ -65,7 +65,8 @@ class CNNRNN(object):
                 recurrent_dropout=params['RNN']['recurrent_dropout']))(H)
 
         # 4. consider combine_feature feature
-        combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')
+        # combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')
+        combine_layer = rnn_cell
 
         # 5. predict probs for labels
         kwargs = params['label']['kwargs'] if 'kwargs' in params['label'] else {}
