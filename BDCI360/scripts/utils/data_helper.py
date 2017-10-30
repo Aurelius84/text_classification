@@ -182,8 +182,8 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         for w in words:
             # if w.flag in ['n','nr','ns','nt','nz']:
             content_word.append(w.word)
-        print('content word...')
-        print(content_word)
+        # print('content word...')
+        # print(content_word)
         pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
         pad_content_word = content_word[:word_max_content_length]
         deal_title = [char_voc[x] if x in char_voc else 0 for x in pad_title]
