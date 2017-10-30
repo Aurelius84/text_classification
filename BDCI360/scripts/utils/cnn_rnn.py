@@ -35,7 +35,6 @@ class CNNRNN(object):
             mask_zero=False)(self.content)
         embedding = BatchNormalization(momentum=0.9)(embedding)
 
-
         # with tf.device('/cpu:0'):
         # 2. convolution for content first
         conv_layer_num = len(params['Conv1D'])
@@ -49,10 +48,11 @@ class CNNRNN(object):
                 strides=1,
                 bias_regularizer=l2(0.01))(H_input)
             # batch_norm
-            conv_batch_norm = Activation('relu')(BatchNormalization(momentum=0.9)(conv))
+            if 'batch_norm' in params['Conv1D']['layer%s' % i]:
+                conv = Activation('relu')(BatchNormalization(momentum=params['Conv1D']['layer%s' % i]['batch_norm'])(conv))
             H = MaxPool1D(
                 pool_size=params['Conv1D']['layer%s' %
-                                           i]['pooling_size'])(conv_batch_norm)
+                                           i]['pooling_size'])(conv)
             # dropout
             if 'dropout' in params['Conv1D']['layer%s' % i]:
                 H = Dropout(
@@ -62,7 +62,7 @@ class CNNRNN(object):
         rnn_cell = Bidirectional(
             GRU(params['RNN']['cell'],
                 dropout=params['RNN']['dropout'],
-                recurrent_dropout=params['RNN']['recurrent_dropout']))(H)
+                recurrent_dropout=params['RNN']['recurrent_dropout']), merge_mode=params['RNN']['merge_mode'])(H)
 
         # 4. consider combine_feature feature
         # combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')

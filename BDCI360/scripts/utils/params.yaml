@@ -32,19 +32,23 @@ Conv1D:
         padding_mode:   'same'
         pooling_size:  2 # default 2
         dropout:       0.15
+        batch_norm:    0.9
     layer2:
         filters:       96
         filter_size:   2
         padding_mode:   'same'
         pooling_size:  2 # default 2
         dropout:      0.15
+        batch_norm:   0.9
     layer3:
         filters:       96
         filter_size:   2
         padding_mode:   'same'
         pooling_size:  2 # default 2
         dropout:      0.15
+        batch_norm:   0.9
 RNN:
     cell: 96
     dropout: 0.2  # default 0.
     recurrent_dropout: 0.1  # default 0.
+    merge_mode: 'concat'  # One of {'sum', 'mul', 'concat', 'ave', None}
