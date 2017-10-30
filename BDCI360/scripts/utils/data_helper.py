@@ -127,7 +127,7 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
         json.dump(char_voc_dict, f)
     with open(word_voc_path, 'w') as f:
         json.dump(word_voc_dict, f)
-    return [char_voc, char_max_title_length, char_max_content_length,word_voc, word_max_title_length,word_max_content_length]
+    return [char_voc, char_max_title_length, char_max_content_length,word_voc, word_max_title_length, word_max_content_length]
 
 
 def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
@@ -180,8 +180,8 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         words = pseg.cut(str(content).lower().strip())
         content_word = []
         for w in words:
-            if w.flag in ['n','nr','ns','nt','nz']:
-                content_word.append(w.word)
+            # if w.flag in ['n','nr','ns','nt','nz']:
+            content_word.append(w.word)
         print('content word...')
         print(content_word)
         pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
@@ -205,7 +205,7 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
             cv=np.random.randint(0, cv))
 
         rev.append(article)
-        break
+        # break
 
     print('len rev: ', len(rev))
     # print('rev 0...')
@@ -223,7 +223,7 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         if a + b == 1:
             cnt += 1
         all += 1.0
-    print(cnt, all, cnt / all)
+    # print(cnt, all, cnt / all)
     return rev, char_voc, word_voc
 
 
