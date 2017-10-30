@@ -76,12 +76,12 @@ def do_eval(sess, model, eval_data, batch_size):
     return eval_loss / eval_cnt, acc
 
 
-def train(params):
+def train(params, train_file, eval_file):
     '''
     train and eval.
     '''
     datas, char_vocab, word_vocab = load_data_cv(
-        file_path='../docs/data/train.tsv',
+        file_path=train_file,
         char_voc_path='../docs/data/char_voc.json',
         word_voc_path='../docs/data/word_voc.json',
         mode='train',
@@ -130,7 +130,7 @@ def train(params):
         init_op = tf.global_variables_initializer()
         sess.run(init_op)
 
-        step = -1
+        step = 0
         best_acc, best_step = 0., 0
         for epoch in range(params['epoch']):
             # shuffle in each epoch
@@ -224,7 +224,7 @@ def train(params):
                             save_name='train.csv')
                         # predict and save eval data
                         eval_public, char_vocab, word_vocab = load_data_cv(
-                            file_path='../docs/data/evaluation_public.tsv',
+                            file_path=eval_file,
                             char_voc_path='../docs/data/char_voc.json',
                             word_voc_path='../docs/data/word_voc.json',
                             mode='eval',
@@ -263,7 +263,7 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
     print('start to predict labels.....')
     K.set_learning_phase(0)
     number_of_data = len(dataset)
-    number_of_batch = ceil(number_of_data / batch_size)
+    number_of_batch = int(ceil(number_of_data / batch_size))
 
     with open('../docs/result/%s' % save_name, 'w') as f:
         for batch in range(number_of_batch):
@@ -354,7 +354,7 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params)
+    train(params, train_file='../docs/data/add.tsv', eval_file='../docs/data/evaluation_public.tsv')
 
     # 加载模型，进行数据预测
     # load_predict(
