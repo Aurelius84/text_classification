@@ -85,8 +85,11 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
 
     train = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
                           engine='python')
-
+    cnt = 0
     for title, content in zip(train[1],train[2]):
+        cnt += 1
+        if cnt % 2000 == 0:
+            print('build vocab over {} ...'.format(cnt))
         title,content = str(title),str(content)
         char_max_title_length = max(char_max_title_length, len(title))
         char_max_content_length = max(char_max_content_length, len(content))
@@ -94,16 +97,18 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
             if x not in char_voc:
                 char_voc_index += 1
                 char_voc[x] = char_voc_index
-        words = pseg.cut(str(title).lower().strip())
-        word_title = []
-        for w in words:
-            if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
-                word_title.append(w.word)
-        words = pseg.cut(str(content).lower().strip())
-        word_content = []
-        for w in words:
-            if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
-                word_content.append(w.word)
+        # words = pseg.cut(str(title).lower().strip())
+        # word_title = []
+        # for w in words:
+        #     if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
+        #         word_title.append(w.word)
+        # words = pseg.cut(str(content).lower().strip())
+        # word_content = []
+        # for w in words:
+        #     if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
+        #         word_content.append(w.word)
+        word_title = jieba.lcut(str(title).lower().strip())
+        word_content = jieba.lcut(str(content).lower().strip())
         word_max_title_length = max(word_max_title_length,len(word_title))
         word_max_content_length = max(word_max_content_length, len(word_content))
         word_content.extend(word_title)
@@ -177,11 +182,11 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         if cnt % 20000 == 0:
             print('load data:...', cnt)
 
-        words = pseg.cut(str(content).lower().strip())
-        content_word = []
-        for w in words:
-            # if w.flag in ['n','nr','ns','nt','nz']:
-            content_word.append(w.word)
+        content_word = jieba.lcut(str(content).lower().strip())
+        # content_word = []
+        # for w in words:
+        #     # if w.flag in ['n','nr','ns','nt','nz']:
+        #     content_word.append(w.word)
         # print('content word...')
         # print(content_word)
         pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
