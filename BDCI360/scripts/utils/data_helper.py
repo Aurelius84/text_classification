@@ -15,6 +15,7 @@ import jieba
 import jieba.posseg as pseg
 import os.path
 import re
+import pickle
 import pandas as pd
 
 import numpy as np
@@ -145,7 +146,6 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
     :param cv:  几折交叉验证
     :return:
     """
-    rev = []
     if os.path.isfile(char_voc_path):
         with open(char_voc_path, 'r') as f:
             voc_dict = json.load(f)
@@ -170,47 +170,56 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
     print('word_max_title_length: ', word_max_title_length)
     print('word_max_content_length: ', word_max_content_length)
 
-    df = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
-                          engine='python')
-    if mode != 'train':
-        df[3] = ['']*len(df)
-    print('load data...')
-    cnt = 0
-    for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
-        title,content = str(title),str(content)
-        cnt += 1
-        if cnt % 20000 == 0:
-            print('load data:...', cnt)
+    # 加载数据对象, 如果存在中间文件，则直接加载
+    rev = []
+    pkl_file = file_path.split('.')[0] + '.pkl'
+    if os.path.isfile(pkl_file):
+        rev = pickle.load(pkl_file)
+    else:
+        df = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
+                              engine='python')
+        if mode != 'train':
+            df[3] = ['']*len(df)
+        print('load data...')
+        cnt = 0
+        for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
+            title,content = str(title),str(content)
+            cnt += 1
+            if cnt % 20000 == 0:
+                print('load data:...', cnt)
 
-        content_word = jieba.lcut(str(content).lower().strip())
-        # content_word = []
-        # for w in words:
-        #     # if w.flag in ['n','nr','ns','nt','nz']:
-        #     content_word.append(w.word)
-        # print('content word...')
-        # print(content_word)
-        pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
-        pad_content_word = content_word[:word_max_content_length]
-        deal_title = [char_voc[x] if x in char_voc else 0 for x in pad_title]
-        deal_title.extend([0] * (char_max_title_length - len(deal_title)))
-        deal_content = [char_voc[x] if x in char_voc else 0 for x in pad_content]
-        deal_content.extend([0] * (char_max_content_length - len(deal_content)))
-        word_content = [word_voc[x] if x in word_voc else 0 for x in pad_content_word]
-        word_content.extend([0] * (word_max_content_length-len(pad_content_word)))
-        deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
-        article = ArticleSample(
-            _id=_id,
-            title=title,
-            deal_title=deal_title,
-            content=content,
-            deal_content=deal_content,
-            word_content=word_content,
-            judge=judge,
-            deal_judge=deal_judge,
-            cv=np.random.randint(0, cv))
+            content_word = jieba.lcut(str(content).lower().strip())
+            # content_word = []
+            # for w in words:
+            #     # if w.flag in ['n','nr','ns','nt','nz']:
+            #     content_word.append(w.word)
+            # print('content word...')
+            # print(content_word)
+            pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
+            pad_content_word = content_word[:word_max_content_length]
+            deal_title = [char_voc[x] if x in char_voc else 0 for x in pad_title]
+            deal_title.extend([0] * (char_max_title_length - len(deal_title)))
+            deal_content = [char_voc[x] if x in char_voc else 0 for x in pad_content]
+            deal_content.extend([0] * (char_max_content_length - len(deal_content)))
+            word_content = [word_voc[x] if x in word_voc else 0 for x in pad_content_word]
+            word_content.extend([0] * (word_max_content_length-len(pad_content_word)))
+            deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
+            article = ArticleSample(
+                _id=_id,
+                title=title,
+                deal_title=deal_title,
+                content=content,
+                deal_content=deal_content,
+                word_content=word_content,
+                judge=judge,
+                deal_judge=deal_judge,
+                cv=np.random.randint(0, cv))
 
-        rev.append(article)
-        # break
+            rev.append(article)
+            # break
+        # 保存中间文件
+        pickle.dump(rev, pkl_file)
+        print('save rev data in {} ...'.format(pkl_file))
 
     print('len rev: ', len(rev))
     # print('rev 0...')
@@ -228,7 +237,7 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         if a + b == 1:
             cnt += 1
         all += 1.0
-    # print(cnt, all, cnt / all)
+    print(cnt, all, cnt / all)
     return rev, char_voc, word_voc
 
 

@@ -354,7 +354,7 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params, train_file='../docs/data/add.tsv', eval_file='../docs/data/evaluation_public.tsv')
+    train(params, train_file='../docs/data/add_5000.tsv', eval_file='../docs/data/evaluation_public.tsv')
 
     # 加载模型，进行数据预测
     # load_predict(
