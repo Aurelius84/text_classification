@@ -35,7 +35,7 @@ class CNNRNN(object):
             mask_zero=False)(self.content)
         embedding = BatchNormalization(momentum=0.9)(embedding)
 
-        # with tf.device('/cpu:0'):
+        # with tf.device('/cpu:0'):ssh
         # 2. convolution for content first
         conv_layer_num = len(params['Conv1D'])
         for i in range(1, conv_layer_num + 1):
@@ -49,10 +49,14 @@ class CNNRNN(object):
                 bias_regularizer=l2(0.01))(H_input)
             # batch_norm
             if 'batch_norm' in params['Conv1D']['layer%s' % i]:
-                conv = Activation('relu')(BatchNormalization(momentum=params['Conv1D']['layer%s' % i]['batch_norm'])(conv))
-            H = MaxPool1D(
-                pool_size=params['Conv1D']['layer%s' %
-                                           i]['pooling_size'])(conv)
+                conv = BatchNormalization(momentum=params['Conv1D']['layer%s' % i]['batch_norm'])(conv)
+            # activation
+            conv = Activation('relu')(conv)
+            # max_pooling
+            if 'pooling_size' in params['Conv1D']['layer%s' % i]:
+                H = MaxPool1D(
+                    pool_size=params['Conv1D']['layer%s' %
+                                               i]['pooling_size'])(conv)
             # dropout
             if 'dropout' in params['Conv1D']['layer%s' % i]:
                 H = Dropout(
@@ -98,6 +102,11 @@ class CNNRNN(object):
             self.loss = tf.reduce_mean(binary_crossentropy(self.labels, self.probs), name='loss')
         else:
             self.loss = tf.reduce_mean(categorical_crossentropy(self.labels, self.probs), name='loss')
+
+        l2_loss = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()
+            if 'bias' not in v.name]) * 0.01
+
+        self.loss = tf.add(self.loss, l2_loss)
 
         # 7. set train_op
         self.train_op = tf.train.RMSPropOptimizer(params['learn_rate']).minimize(

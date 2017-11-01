@@ -17,6 +17,7 @@ import os.path
 import re
 import pickle
 import pandas as pd
+import time
 
 import numpy as np
 
@@ -172,21 +173,21 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
 
     # 加载数据对象, 如果存在中间文件，则直接加载
     rev = []
-    pkl_file = file_path.split('.')[0] + '.pkl'
+    pkl_file = file_path[:-4] + '.pkl'
     if os.path.isfile(pkl_file):
-        rev = pickle.load(pkl_file)
+        print('load data from temp pkl file {}'.format(pkl_file))
+        rev = pickle.load(open(pkl_file, 'rb'))
     else:
+        jieba.enable_parallel()
         df = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
                               engine='python')
         if mode != 'train':
             df[3] = ['']*len(df)
         print('load data...')
+
         cnt = 0
         for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
-            title,content = str(title),str(content)
-            cnt += 1
-            if cnt % 20000 == 0:
-                print('load data:...', cnt)
+            title, content = str(title),str(content)
 
             content_word = jieba.lcut(str(content).lower().strip())
             # content_word = []
@@ -217,8 +218,13 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
 
             rev.append(article)
             # break
+            cnt += 1
+            if cnt % 2000 == 0:
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
+                                          time.localtime())
+                print('{} load data: {} ...'.format(timestamp, cnt))
         # 保存中间文件
-        pickle.dump(rev, pkl_file)
+        pickle.dump(rev, open(pkl_file, 'wb'))
         print('save rev data in {} ...'.format(pkl_file))
 
     print('len rev: ', len(rev))
