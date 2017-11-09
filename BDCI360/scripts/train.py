@@ -123,7 +123,7 @@ def train(params, train_file, eval_file):
     with tf.Session(config=config) as sess, tf.device('/gpu:1'):
         cnn_rnn = CNNRNN(params)
 
-        saver = tf.train.Saver(max_to_keep=4)
+        saver = tf.train.Saver(max_to_keep=2)
         test_writer = tf.summary.FileWriter(log_test_dir)
         train_writer = tf.summary.FileWriter(log_train_dir, sess.graph)
 
@@ -140,18 +140,24 @@ def train(params, train_file, eval_file):
                     range(0, number_of_training_data, batch_size),
                     range(batch_size, number_of_training_data, batch_size)):
                 step += 1
+                # balance sample
+                batch_data = [article for article in train_datas[start:end] if article.judge == 'POSITIVE']
+                len_pos = len(batch_data)
+                len_neg = min(len_pos, end - start - len_pos)
+                batch_data.extend([article for article in train_datas[start:end] if article.judge != 'POSITIVE'][:len_neg])
+
                 titles = [
-                    article.deal_title for article in train_datas[start:end]
+                    article.deal_title for article in batch_data
                 ]
                 contents = [
-                    article.word_content for article in train_datas[start:end]
+                    article.word_content for article in batch_data
                 ]
                 labels = [
-                    article.deal_judge for article in train_datas[start:end]
+                    article.deal_judge for article in batch_data
                 ]
                 combine_feature = [
                     article.combine_feature
-                    for article in train_datas[start:end]
+                    for article in batch_data
                 ]
 
                 trn_loss, trn_probs, trn_acc, _ = sess.run(
@@ -168,8 +174,8 @@ def train(params, train_file, eval_file):
                     })
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
                                           time.localtime())
-                str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
-                    timestamp, epoch, step, trn_loss, trn_acc)
+                str_loss = '{}:  epoch: {}, step: {} 0/1: {}/{} train_loss: {}, train_acc: {}'.format(
+                    timestamp, epoch, step, len_neg, len_pos, trn_loss, trn_acc)
                 print(str_loss)
                 # 每 5个 batch 记录一下train loss
                 if step % params['log_train_batch'] == 0:
@@ -354,7 +360,7 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params, train_file='../docs/data/add.tsv', eval_file='../docs/data/eval_add.tsv')
+    train(params, train_file='../docs/data/add_bak.tsv', eval_file='../docs/data/eval_add.tsv')
 
     # 加载模型，进行数据预测
     # load_predict(

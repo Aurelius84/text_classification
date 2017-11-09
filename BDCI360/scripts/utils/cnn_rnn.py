@@ -39,7 +39,7 @@ class CNNRNN(object):
         # 2. convolution for content first
         conv_layer_num = len(params['Conv1D'])
         for i in range(1, conv_layer_num + 1):
-            H_input = embedding if i == 1 else H
+            H_input = embedding if i == 1 else conv
             conv = Conv1D(
                 filters=params['Conv1D']['layer%s' % i]['filters'],
                 kernel_size=params['Conv1D']['layer%s' % i]['filter_size'],
@@ -54,23 +54,27 @@ class CNNRNN(object):
             conv = Activation('relu')(conv)
             # max_pooling
             if 'pooling_size' in params['Conv1D']['layer%s' % i]:
-                H = MaxPool1D(
+                conv = MaxPool1D(
                     pool_size=params['Conv1D']['layer%s' %
                                                i]['pooling_size'])(conv)
             # dropout
             if 'dropout' in params['Conv1D']['layer%s' % i]:
-                H = Dropout(
-                    params['Conv1D']['layer%s' % i]['dropout'])(H)
+                conv = Dropout(
+                    params['Conv1D']['layer%s' % i]['dropout'])(conv)
 
         # 3. Bi-LSTM for outputs of convolution layers
         rnn_cell = Bidirectional(
             GRU(params['RNN']['cell'],
                 dropout=params['RNN']['dropout'],
-                recurrent_dropout=params['RNN']['recurrent_dropout']), merge_mode=params['RNN']['merge_mode'])(H)
+                recurrent_dropout=params['RNN']['recurrent_dropout']), merge_mode=params['RNN']['merge_mode'])(conv)
+
+        # batch_norm
+        if 'batch_norm' in params['RNN']:
+            rnn_cell = BatchNormalization(momentum=params['RNN']['batch_norm'])(rnn_cell)
 
         # 4. consider combine_feature feature
-        # combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')
-        combine_layer = rnn_cell
+        combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')
+        # combine_layer = rnn_cell
 
         # 5. predict probs for labels
         kwargs = params['label']['kwargs'] if 'kwargs' in params['label'] else {}
@@ -103,10 +107,10 @@ class CNNRNN(object):
         else:
             self.loss = tf.reduce_mean(categorical_crossentropy(self.labels, self.probs), name='loss')
 
-        l2_loss = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()
-            if 'bias' not in v.name]) * 0.01
+        # l2_loss = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()
+        #     if 'bias' not in v.name]) * 0.01
 
-        self.loss = tf.add(self.loss, l2_loss)
+        # self.loss = tf.add(self.loss, l2_loss)
 
         # 7. set train_op
         self.train_op = tf.train.RMSPropOptimizer(params['learn_rate']).minimize(
