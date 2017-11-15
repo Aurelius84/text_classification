@@ -21,8 +21,8 @@ from model import SNLIClassifier
 from util import get_args, makedirs
 
 args = get_args()
-
-torch.cuda.set_device(args.gpu)
+if torch.cuda.is_available():
+    torch.cuda.set_device(args.gpu)
 inputs = data.Field(lower=args.lower)
 answer = data.Field(sequential=False)
 
@@ -31,7 +31,7 @@ train, dev, test = datasets.SNLI.splits(inputs, answer)
 inputs.build_vocab(train, dev, test)
 
 if args.word_vectors:
-    if os.path.isfile(args.word_cache):
+    if os.path.isfile(args.vector_cache):
         inputs.vocab.vectors = torch.load(args.vector_cache)
     else:
         inputs.vocab.load_vectors(args.word_vectors)
@@ -59,7 +59,8 @@ else:
     model = SNLIClassifier(config)
     if args.word_vectors:
         model.embed.weight.data = inputs.vocab.vectors
-        model.cuda()
+        if torch.cuda.is_available():
+            model.cuda()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
