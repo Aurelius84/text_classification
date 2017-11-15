@@ -53,7 +53,9 @@ if config.birnn:
     config.n_cells *= 2
 
 if args.resume_snapshot:
-    model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
+    model = torch.load(args.resume_snapshot,
+                       map_location=lambda storage, location: storage.cuda(args.gpu)
+                       )
 
 else:
     model = SNLIClassifier(config)
