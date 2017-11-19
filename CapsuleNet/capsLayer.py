@@ -108,6 +108,16 @@ def routing(input, b_IJ):
     W = tf.get_variable('Weight', shape=(1, 1152, 10, 8, 16), dtype=tf.float32,
                         initializer=tf.random_normal_initializer(stddev=cfg.stddev))
 
+    # Eq.2, calc u_hat
+    # do tiling for input and W before matmul
+    # input => [batch_size, 1152, 10, 8, 1]
+    # W => [batch_size, 1152, 10, 8, 16]
+    input = tf.tile(input, [1, 1, 10, 1, 1])
+    W = tf.tile(W, [cfg.batch_size, 1, 1, 1, 1])
+
+
+    assert input.get_shape() == [cfg.batch_size, 1152, 10, 8, 1]
+
     # in last 2 dims:
     # [8, 16].T x [8, 1] => [16, 1] => [batch_size, 1152, 10, 16, 1]
     # tf.scan, 3 iter, 1080ti, 128 batch size: 10min/epoch

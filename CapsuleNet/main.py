@@ -14,7 +14,7 @@ from config import cfg
 from utils import load_mnist
 from capsNet import CapsNet
 
-def main():
+def main(_):
     capsNet = CapsNet(is_training=cfg.is_training)
     tf.logging.info('Graph loaded')
     sv = tf.train.Supervisor(graph=capsNet.graph,

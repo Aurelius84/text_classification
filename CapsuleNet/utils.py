@@ -11,12 +11,14 @@ import os
 import scipy
 import numpy as np
 import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
 
 from config import cfg
 
 
 def load_mnist(path, is_training):
-    fd = open(os.path.join(cfg.dataset, 'train-images-idx3-ubyte'))
+    fd = open(os.path.join(path, 'train-images-idx3-ubyte'))
+
     loaded = np.fromfile(file=fd, dtype=np.uint8)
     trX = loaded[16:].reshape((60000, 28, 28, 1)).astype(np.float)
 

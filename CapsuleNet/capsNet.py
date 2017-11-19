@@ -8,7 +8,7 @@
 
 import tensorflow as tf
 
-import config as cfg
+from config import cfg
 from utils import get_batch_data
 from capsLayer import CapsLayer
 
