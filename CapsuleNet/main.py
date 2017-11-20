@@ -47,7 +47,7 @@ def main(_):
                     for i in range(num_test_batch):
                         start = i * cfg.batch_size
                         end = start + cfg.batch_size
-                        test_acc += sess.run(capsNet.batch_accuracy,
+                        test_acc += sess.run(capsNet.batch_acc,
                                              {capsNet.X: teX[start:end], capsNet.labels: teY[start:end]})
                     test_acc = test_acc / (cfg.batch_size * num_test_batch)
                     fd_results.write(str(global_step + 1) + ',' + str(test_acc) + '\n')
