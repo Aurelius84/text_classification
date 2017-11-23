@@ -20,6 +20,14 @@ import pandas as pd
 import time
 
 import numpy as np
+from multiprocessing import cpu_count
+
+processnum = 8 if cpu_count() > 8 else 4
+
+jieba.enable_parallel(processnum)
+
+global split_token
+split_token='\u0001'
 
 
 class ArticleSample(object):
@@ -70,7 +78,6 @@ class ArticleSample(object):
                 return
 
 
-
 def build_vocab(file_path, char_voc_path, word_voc_path):
     """
     建立词典
@@ -79,45 +86,38 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
     :param word_voc_path: 词的词典保存地址
     :return:
     """
+
     print('build vocab...')
-    char_voc,word_voc = {'<s>': 0},{'<s>':0}
-    char_voc_index,word_voc_index = 0,0
-    char_max_title_length,word_max_title_length = 0,0
-    char_max_content_length,word_max_content_length = 0,0
 
     train = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
                           engine='python')
-    cnt = 0
-    for title, content in zip(train[1],train[2]):
-        cnt += 1
-        if cnt % 2000 == 0:
-            print('build vocab over {} ...'.format(cnt))
-        title,content = str(title),str(content)
-        char_max_title_length = max(char_max_title_length, len(title))
-        char_max_content_length = max(char_max_content_length, len(content))
-        for x in title+content:
-            if x not in char_voc:
-                char_voc_index += 1
-                char_voc[x] = char_voc_index
-        # words = pseg.cut(str(title).lower().strip())
-        # word_title = []
-        # for w in words:
-        #     if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
-        #         word_title.append(w.word)
-        # words = pseg.cut(str(content).lower().strip())
-        # word_content = []
-        # for w in words:
-        #     if w.flag in ['n', 'nr', 'ns', 'nt', 'nz']:
-        #         word_content.append(w.word)
-        word_title = jieba.lcut(str(title).lower().strip())
-        word_content = jieba.lcut(str(content).lower().strip())
-        word_max_title_length = max(word_max_title_length,len(word_title))
-        word_max_content_length = max(word_max_content_length, len(word_content))
-        word_content.extend(word_title)
-        for x in word_content:
-            if x not in word_voc:
-                word_voc_index +=1
-                word_voc[x] = word_voc_index
+
+    char_max_title_length = max(len(x) for x in train[1])
+    char_max_content_length = max(len(x) for x in train[2])
+
+    start = time.time()
+    title_segment = jieba.cut(split_token.join(train[1]))
+    title_segment = ' '.join(title_segment).split(split_token)
+    assert len(title_segment) == len(train)
+    end = time.time()
+    print('segment title complete, cost %.2f s' % (end - start))
+
+    word_max_title_length = max(len(x.split()) for x in title_segment)
+
+    content_segment = jieba.cut(split_token.join(train[2]))
+    content_segment = ' '.join(content_segment).split(split_token)
+    assert len(content_segment) == len(train)
+    print('segment content complete, cost %.2f s' % (time.time() - end))
+
+    word_max_content_length = max(len(x.split()) for x in content_segment)
+
+    char_set = set(''.join(train[1]))
+    words_set = set(' '.join(content_segment).split())
+
+    char_voc = {ch: ind + 1 for ind, ch in enumerate(char_set)}
+    char_voc['<s>'] = 0
+
+    word_voc = {wd: ind + 1 for ind, wd in enumerate(words_set)}
 
     print('build vocab done')
     char_voc_dict = {
@@ -134,10 +134,11 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
         json.dump(char_voc_dict, f)
     with open(word_voc_path, 'w') as f:
         json.dump(word_voc_dict, f)
-    return [char_voc, char_max_title_length, char_max_content_length,word_voc, word_max_title_length, word_max_content_length]
+    return [char_voc, char_max_title_length, char_max_content_length, word_voc, word_max_title_length,
+            word_max_content_length, title_segment, content_segment]
 
 
-def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
+def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5):
     """
     加载训练数据、测试数据
     :param file_path:  数据地址
@@ -147,6 +148,9 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
     :param cv:  几折交叉验证
     :return:
     """
+    title_segment, content_segment = None, None
+
+    # 如果已经存在 char 和 word 词典，直接加载
     if os.path.isfile(char_voc_path):
         with open(char_voc_path, 'r') as f:
             voc_dict = json.load(f)
@@ -158,10 +162,11 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
             word_voc = voc_dict['voc']
             word_max_title_length = voc_dict['max_title_length']
             word_max_content_length = voc_dict['max_content_length']
-    else:
-        char_voc, char_max_title_length, char_max_content_length,\
-        word_voc, word_max_title_length, word_max_content_length\
-            = build_vocab(file_path, char_voc_path, word_voc_path)
+    else:  # 否则对原始文件进行词典构建，并返回title和content分词后的结果
+        char_voc, char_max_title_length, char_max_content_length, \
+        word_voc, word_max_title_length, word_max_content_length, \
+        title_segment, content_segment = build_vocab(file_path, char_voc_path, word_voc_path)
+
     char_max_content_length = min(char_max_content_length, 1000)
     word_max_content_length = min(word_max_content_length, 200)
     print('len char voc: ', len(char_voc))
@@ -178,24 +183,23 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
         print('load data from temp pkl file {}'.format(pkl_file))
         rev = pickle.load(open(pkl_file, 'rb'))
     else:
-        jieba.enable_parallel()
         df = pd.read_table(file_path, sep='\\t', encoding='utf-8', header=None,
-                              engine='python')
+                           engine='python')
         if mode != 'train':
-            df[3] = ['']*len(df)
+            df[3] = [''] * len(df)
         print('load data...')
+        # 如果没有预分词后的 title 和 content，则并行处理，速度快
+        if content_segment is None:
+            content_segment = jieba.cut(split_token.join(df[2]))
+            content_segment = ' '.join(content_segment).split(split_token)
 
         cnt = 0
         for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
-            title, content = str(title),str(content)
+            title, content = str(title), str(content)
 
-            content_word = jieba.lcut(str(content).lower().strip())
-            # content_word = []
-            # for w in words:
-            #     # if w.flag in ['n','nr','ns','nt','nz']:
-            #     content_word.append(w.word)
-            # print('content word...')
-            # print(content_word)
+            # content_word = jieba.lcut(str(content).lower().strip())
+            content_word = content_segment[cnt].split()
+
             pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
             pad_content_word = content_word[:word_max_content_length]
             deal_title = [char_voc[x] if x in char_voc else 0 for x in pad_title]
@@ -203,7 +207,7 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
             deal_content = [char_voc[x] if x in char_voc else 0 for x in pad_content]
             deal_content.extend([0] * (char_max_content_length - len(deal_content)))
             word_content = [word_voc[x] if x in word_voc else 0 for x in pad_content_word]
-            word_content.extend([0] * (word_max_content_length-len(pad_content_word)))
+            word_content.extend([0] * (word_max_content_length - len(pad_content_word)))
             deal_judge = [1, 0] if judge == 'POSITIVE' else [0, 1]
             article = ArticleSample(
                 _id=_id,
@@ -248,9 +252,9 @@ def load_data_cv(file_path, char_voc_path,word_voc_path, mode, cv=5):
 
 
 if __name__ == '__main__':
-    file_path_train = '../../docs/data/train_1000.tsv'
+    file_path_train = '../../docs/data/add_1000.tsv'
     file_path_test = '../../docs/data/evaluation_public_1000.tsv'
     char_voc_path = '../../docs/data/char_voc.json'
     word_voc_path = '../../docs/data/word_voc.json'
-    load_data_cv(file_path_train, char_voc_path,word_voc_path, 'train')
+    load_data_cv(file_path_train, char_voc_path, word_voc_path, 'train')
     # load_data_cv(file_path_test, voc_path, 'eval')

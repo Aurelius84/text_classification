@@ -1,7 +1,7 @@
 # params config
 # iter params
-batch_size:    300
-epoch:        2
+batch_size:    256
+epoch:        3
 learn_rate:    0.01
 log_train_batch:  25  # 每隔几个batch在tensorboard里记录训练信息
 eval_test_batch:  100  # 每隔几个batch评估一下切分出来的测试集
@@ -30,51 +30,51 @@ Conv1D:
         filters:       48
         filter_size:    3
         padding_mode:   'same'
-#        pooling_size:  2 # default 2
-        dropout:       0.2
+        pooling_size:  2 # default 2
+#        dropout:       0.2
         batch_norm:    0.9
     layer2:
         filters:       48
         filter_size:   3
         padding_mode:   'same'
         pooling_size:  2 # default 2
-        dropout:      0.2
+#        dropout:      0.2
         batch_norm:   0.9
 
     layer3:
         filters:       96
         filter_size:   4
         padding_mode:   'same'
-#        pooling_size:  2 # default 2
-        dropout:      0.2
+        pooling_size:  2 # default 2
+#        dropout:      0.2
         batch_norm:   0.9
     layer4:
         filters:       96
         filter_size:   4
         padding_mode:   'same'
         pooling_size:  2 # default 2
-        dropout:      0.2
+#        dropout:      0.2
         batch_norm:   0.9
 
     layer5:
         filters:       128
         filter_size:   5
         padding_mode:   'same'
-#        pooling_size:  2 # default 2
-        dropout:      0.2
+        pooling_size:  2 # default 2
+#        dropout:      0.2
         batch_norm:   0.9
     layer6:
         filters:       128
         filter_size:   5
         padding_mode:   'same'
         pooling_size:  2 # default 2
-        dropout:      0.2
+#        dropout:      0.2
         batch_norm:   0.9
 
 RNN:
     cell: 192
-    dropout: 0.2  # default 0.
-    recurrent_dropout: 0.1  # default 0.
+#    dropout: 0.2  # default 0.
+#    recurrent_dropout: 0.1  # default 0.
     merge_mode: 'concat'  # One of {'sum', 'mul', 'concat', 'ave', None}
     batch_norm: 0.9
 

@@ -65,8 +65,10 @@ class CNNRNN(object):
         # 3. Bi-LSTM for outputs of convolution layers
         rnn_cell = Bidirectional(
             GRU(params['RNN']['cell'],
-                dropout=params['RNN']['dropout'],
-                recurrent_dropout=params['RNN']['recurrent_dropout']), merge_mode=params['RNN']['merge_mode'])(conv)
+            # dropout=params['RNN']['dropout'],
+            # recurrent_dropout=params['RNN']['recurrent_dropout']
+            ),
+            merge_mode=params['RNN']['merge_mode'])(conv)
 
         # batch_norm
         if 'batch_norm' in params['RNN']:

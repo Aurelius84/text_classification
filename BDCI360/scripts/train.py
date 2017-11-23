@@ -113,7 +113,7 @@ def train(params, train_file, eval_file):
 
     # 设置gpu限制
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.per_process_gpu_memory_fraction = 0.6
+    config.gpu_options.per_process_gpu_memory_fraction = 0.3
 
     # add model saver, default save lastest 4 model checkpoints
     model_dir = params['model_dir'] + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
@@ -141,11 +141,12 @@ def train(params, train_file, eval_file):
                     range(batch_size, number_of_training_data, batch_size)):
                 step += 1
                 # balance sample
-                batch_data = [article for article in train_datas[start:end] if article.judge == 'POSITIVE']
-                len_pos = len(batch_data)
-                len_neg = min(len_pos, end - start - len_pos)
-                batch_data.extend([article for article in train_datas[start:end] if article.judge != 'POSITIVE'][:len_neg])
+                # batch_data = [article for article in train_datas[start:end] if article.judge == 'POSITIVE']
+                # len_pos = len(batch_data)
+                # len_neg = min(len_pos, end - start - len_pos)
+                # batch_data.extend([article for article in train_datas[start:end] if article.judge != 'POSITIVE'][:len_neg])
 
+                batch_data = train_datas[start:end]
                 titles = [
                     article.deal_title for article in batch_data
                 ]
@@ -360,7 +361,7 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params, train_file='../docs/data/add_bak.tsv', eval_file='../docs/data/eval_add.tsv')
+    train(params, train_file='../docs/data/train.tsv', eval_file='../docs/data/evaluation_public.tsv')
 
     # 加载模型，进行数据预测
     # load_predict(
