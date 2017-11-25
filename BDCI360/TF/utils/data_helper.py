@@ -6,7 +6,7 @@ Competition url: http://www.datafountain.cn/#/competitions/276/intro
 # -*- coding: utf-8 -*-
 # @Time    : 2017/10/13 下午9:54
 # @Author  : Qi MO
-# @File    : data_helper.py
+# @File    : utils.py
 # @Software: PyCharm
 
 import csv
@@ -24,15 +24,15 @@ from multiprocessing import cpu_count
 
 processnum = 8 if cpu_count() > 8 else 4
 
-jieba.enable_parallel(processnum)
+# jieba.enable_parallel(processnum)
 
 global split_token
 split_token='\u0001'
 
 
 class ArticleSample(object):
-    def __init__(self, _id, title, deal_title, content, deal_content, word_content, judge,
-                 deal_judge, cv):
+    def __init__(self, _id, title, deal_title, content, deal_content, judge,
+                 deal_judge, cv, word_content=None):
         """
         文章对象
         :param id:  文章ID(str)
@@ -189,16 +189,18 @@ def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5):
             df[3] = [''] * len(df)
         print('load data...')
         # 如果没有预分词后的 title 和 content，则并行处理，速度快
-        if content_segment is None:
-            content_segment = jieba.cut(split_token.join(df[2]))
-            content_segment = ' '.join(content_segment).split(split_token)
+        # if content_segment is None:
+        #     content_segment = jieba.cut(split_token.join(df[2]))
+        #     content_segment = ' '.join(content_segment).split(split_token)
 
         cnt = 0
         for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
             title, content = str(title), str(content)
 
             # content_word = jieba.lcut(str(content).lower().strip())
-            content_word = content_segment[cnt].split()
+            title = ''.join(title.split())
+            content_word = content.split()
+            content = ''.join(content_word)
 
             pad_title, pad_content = title[:char_max_title_length], content[:char_max_content_length]
             pad_content_word = content_word[:word_max_content_length]

@@ -21,7 +21,14 @@ from keras import backend as K
 from utils.cnn_rnn import CNNRNN
 from utils.data_helper import load_data_cv
 
+
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
 K.set_learning_phase(1)
+
+
 
 
 def do_eval(sess, model, eval_data, batch_size):
@@ -113,14 +120,14 @@ def train(params, train_file, eval_file):
 
     # 设置gpu限制
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.per_process_gpu_memory_fraction = 0.3
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8
 
     # add model saver, default save lastest 4 model checkpoints
     model_dir = params['model_dir'] + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
     os.makedirs(model_dir)
     model_name = model_dir + '/' + params['model_name']
 
-    with tf.Session(config=config) as sess, tf.device('/gpu:1'):
+    with tf.Session(config=config) as sess, tf.device('/gpu:0'):
         cnn_rnn = CNNRNN(params)
 
         saver = tf.train.Saver(max_to_keep=2)
@@ -175,8 +182,8 @@ def train(params, train_file, eval_file):
                     })
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
                                           time.localtime())
-                str_loss = '{}:  epoch: {}, step: {} 0/1: {}/{} train_loss: {}, train_acc: {}'.format(
-                    timestamp, epoch, step, len_neg, len_pos, trn_loss, trn_acc)
+                str_loss = '{}:  epoch: {}, step: {} train_loss: {}, train_acc: {}'.format(
+                    timestamp, epoch, step, trn_loss, trn_acc)
                 print(str_loss)
                 # 每 5个 batch 记录一下train loss
                 if step % params['log_train_batch'] == 0:
@@ -282,7 +289,7 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
                 article.deal_title for article in dataset[start:end]
             ]
             curr_contents = [
-                article.word_content for article in dataset[start:end]
+                article.deal_content for article in dataset[start:end]
             ]
 
             curr_combine_feature = [
@@ -361,7 +368,7 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params, train_file='../docs/data/train.tsv', eval_file='../docs/data/evaluation_public.tsv')
+    train(params, train_file='../docs/data/train.tsv_cutv0_1_fix.csv', eval_file='../docs/data/evaluation_public.tsv')
 
     # 加载模型，进行数据预测
     # load_predict(

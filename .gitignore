@@ -106,3 +106,12 @@ ENV/
 *.tsv
 events.*
 data/
+*.jpg
+*.png
+*.jpeg
+*.gif
+*.csv
+*dataset*
+*.gz
+*.pth
+pytorch/dcgan/cifar10/*

@@ -12,7 +12,6 @@ import torch
 import pandas as pd
 import re
 import transforms
-import jieba
 import os
 import json
 
@@ -47,7 +46,7 @@ class BDCIDataset(Dataset):
         self.char_content_transform = transforms.Compose([
             transforms.ToIndex(char_voc),
             transforms.Pad(self.char_content_len),
-            torch.IntTensor
+            torch.LongTensor
         ])
 
         self.word_content_transform = transforms.Compose([
@@ -60,13 +59,14 @@ class BDCIDataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-        sample = ArticleSample(id=self.ids[idx],
-                               title=self.titles[idx],
-                               content=self.contents[idx],
+        sample = ArticleSample(id=str(self.ids[idx]),
+                               title=str(self.titles[idx]),
+                               content=str(self.contents[idx]),
                                label=self.labels[idx] if self.labels is not None else None)
         # sample.content_word = self.contents[idx].split()
-        sample.content_word = list(jieba.cut(self.contents[idx]))
-        sample.content_word_vec = self.word_content_transform(sample.content_word)
+        # sample.content_word = list(jieba.cut(str(self.contents[idx])))
+        # sample.content_word_vec = self.word_content_transform(sample.content_word)
+        sample.content_char_vec = self.char_content_transform(sample.content)
         sample.label_vec = torch.FloatTensor(sample.label_vec)
 
         return sample.__dict__
@@ -84,7 +84,6 @@ class ArticleSample(object):
                  title_word_vec=[],
                  content_char_vec=[],
                  content_word_vec=[],
-                 label_vec=[],
                  cv=0):
 
         self.id = id
@@ -101,8 +100,12 @@ class ArticleSample(object):
 
         self.content_char_vec = content_char_vec
         self.content_word_vec = content_word_vec
-        self.label_vec = label_vec or [0, 1] if label == 'POSITIVE' else [1, 0]
+        if label == '' or label is None:
+            self.label_vec = None
+        else:
+            self.label_vec = [0, 1] if label == 'POSITIVE' else [1, 0]
 
+        '''
         self.content_repeat = 0
         # 真实长度对1000做归一
         self.real_len = len(self.content) / 1000.
@@ -113,6 +116,7 @@ class ArticleSample(object):
 
         # 各种单个特征，如重复、句子长度组合的特征，放在预测的前一层
         self.combine_feature = [self.real_len, self.content_repeat, self.real_len]
+        '''
 
     def get_content_repeat(self):
         sen_dict = {}
@@ -124,6 +128,14 @@ class ArticleSample(object):
                 return
 
 def load_voc(dir_path):
+    '''
+    load char vocab and word vocab
+    Args:
+        dir_path: str, dir name of vocab
+
+    Returns: two dict of char and word vocab
+
+    '''
 
     with open(os.path.join(dir_path, 'char_voc.json'), 'r') as f:
         char_dict = json.load(f)
@@ -134,6 +146,7 @@ def load_voc(dir_path):
         word_dict = json.load(f)
 
     return char_dict, word_dict
+
 
 if __name__ == '__main__':
     char_voc_path = '../../docs/data/char_voc.json'

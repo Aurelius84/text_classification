@@ -29,14 +29,14 @@ class Compose(object):
         for t in self.transforms:
             data = t(data)
         return data
-    
+
 
 class Pad(object):
-    
+
     def __init__(self, seq_len, default=0):
         self.seq_len = seq_len
         self.default = default
-    
+
     def __call__(self, data):
         if len(data) >= self.seq_len:
             return data[:self.seq_len]
