@@ -87,7 +87,7 @@ def train(dataloader):
                 params.global_step += 1
                 if loss.data[0] < min_loss:
                     # save model
-                    model.save(name=time.strftime('%m-%d_%H:%M.pth'))
+                    model.save(name=params.save_name)
                     min_loss = loss.data[0]
                 # 评估模型
                 val(model, eval_dataloader, params.global_step)
@@ -133,9 +133,9 @@ def predict():
 
 
 if __name__ == "__main__":
-    char_dict, word_dict = load_voc('../docs/data/old')
+    char_dict, word_dict = load_voc('../docs/data/')
     # 训练集文本
-    trainset = BDCIDataset('../docs/data/old/train_old.tsv',
+    trainset = BDCIDataset(os.path.join(params.data, params.train_file),
                            char_dict['voc'],
                            word_dict['voc'],
                            char_title_len=char_dict['max_title_length'],
@@ -148,7 +148,7 @@ if __name__ == "__main__":
                                 batch_size=params.batch_size,
                                 shuffle=True, num_workers=params.num_workers)
     # 测试集文本
-    eval_set = BDCIDataset('../docs/data/old/old_eval.tsv',
+    eval_set = BDCIDataset(os.path.join(params.data, params.eval_file),
                            char_dict['voc'],
                            word_dict['voc'],
                            char_title_len=char_dict['max_title_length'],

@@ -5,6 +5,7 @@
 # @File    : config
 # @Author  : Liujie Zhang
 # @Email   : liujiezhangbupt@gmail.com
+import time
 import argparse
 
 parser = argparse.ArgumentParser(description='CNN and RNN model for BDI360')
@@ -14,7 +15,7 @@ parser = argparse.ArgumentParser(description='CNN and RNN model for BDI360')
 #########################
 parser.add_argument('--n-fold', type=int, default=10,
                     help='number of fold to split data for validate')
-parser.add_argument('--batch-size', '-b', type=int, default=100,
+parser.add_argument('--batch-size', '-b', type=int, default=128,
                     help='batch size')
 parser.add_argument('--embed-dim', type=int, default=50,
                     help='embedding dimension')
@@ -37,11 +38,11 @@ parser.add_argument('--log-interval', type=int, default=50,
 #########################
 # file path based
 #########################
-parser.add_argument('--data', type=str, default='../../docs/data',
+parser.add_argument('--data', type=str, default='../docs/data/',
                     help='dataset dirname')
 parser.add_argument('--train-file', type=str, default='train.tsv',
                     help='file name of train dataset')
-parser.add_argument('--eval-file', type=str, default='evaluation_public.tsv',
+parser.add_argument('--eval-file', type=str, default='test_20000.tsv',
                     help='file name of eval dataset')
 parser.add_argument('--embed-path', type=str,
                     help='embedding dimension')
@@ -51,6 +52,8 @@ parser.add_argument('--char_vocab', type=int, default=14804,
                     help='char vocab size')
 parser.add_argument('--content-word-seq-len', type=int, default=2619,
                     help='content word sequence length')
+parser.add_argument('--save_name', type=str, default=time.strftime('%m-%d_%H:%M.pth'),
+                    help='name of saved model ')
 parser.add_argument('--content-char-seq-len', type=int, default=3385,
                     help='content char sequence length')
 
