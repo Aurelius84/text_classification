@@ -72,8 +72,8 @@ def train(dataloader):
             optimizer.zero_grad()
             loss = criterion(outputs, vy)
             loss.backward()
-            # if params.clip > 0:
-            #     torch.nn.utils.clip_grad_norm(model.parameters(), 0.1)
+            if params.clip > 0:
+                torch.nn.utils.clip_grad_norm(model.parameters(), 0.1)
             optimizer.step()
 
             # train accuracy
