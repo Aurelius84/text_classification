@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time    : 2017/11/25 15:00
+# @Time    : 2017/11/26 13:21
 # @From    : PyCharm
-# @File    : DeepCNNBN_train.py
+# @File    : DeepCRNN_train
 # @Author  : Liujie Zhang
 # @Email   : liujiezhangbupt@gmail.com
-
 import os
 
 import torch
-import time
 from tqdm import tqdm
 import torch.nn.functional as F
 import torch.optim as optim
@@ -42,7 +40,7 @@ def train(dataloader):
     global test_writer
     test_writer = SummaryWriter(comment='_test')
 
-    model = models.DeepCNNBN(params)
+    model = models.DeepCRNN(params)
     optimizer = optim.Adam(model.parameters(), lr=params.lr)
     criterion = torch.nn.BCELoss()
     if params.cuda:
@@ -60,11 +58,12 @@ def train(dataloader):
             # print(samples['title'][0], samples['label'][0])
             vx, vy = samples[input_type], samples['label_vec']
             batch_size = vx.size()[0]
+            h0 = model.init_hidden(batch_size, use_cuda=params.cuda)
 
             if params.cuda:
                 vx, vy = samples[input_type].cuda(), samples['label_vec'].cuda()
             vx, vy = Variable(vx), Variable(vy)
-            outputs = model(vx)
+            outputs, hidden = model(vx, h0)
 
             # if params.cuda:
             #     outputs = outputs.cuda()
@@ -112,11 +111,13 @@ def val(model, dataloader, step):
     test_loss, correct = 0., 0
     for samples in tqdm(dataloader):
         data, target = samples[input_type], samples['label_vec']
+        batch_size = data.size()[0]
+        h0 = model.init_hidden(batch_size, use_cuda=params.cuda)
         if params.cuda:
             data, target = data.cuda(), target.cuda()
         data, target = Variable(data, volatile=True), Variable(target, volatile=True)
 
-        output = model(data)
+        output, hidden = model(data, h0)
         if params.cuda:
             output = output.cuda()
         test_loss += F.binary_cross_entropy(output, target, size_average=False).data[0]  # sum up batch loss

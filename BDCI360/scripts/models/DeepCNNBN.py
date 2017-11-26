@@ -6,7 +6,7 @@
 # @Author  : Liujie Zhang
 # @Email   : liujiezhangbupt@gmail.com
 
-from .BaseModule import BaseModule
+from BaseModule import BaseModule
 import torch
 import numpy as np
 import torch.nn as nn
@@ -23,9 +23,9 @@ class DeepCNNBN(BaseModule):
 
         self.opt = opt
 
-        self.encoder = nn.Embedding(opt.word_vocab, opt.embed_dim)
+        self.encoder = nn.Embedding(opt.char_vocab, opt.embed_dim)
 
-        content_word_conv = [nn.Sequential(nn.Conv1d(in_channels=opt.embed_dim,
+        content_conv = [nn.Sequential(nn.Conv1d(in_channels=opt.embed_dim,
                                                      out_channels=128,
                                                      kernel_size=kernel_size),
                                                 nn.BatchNorm1d(128),
@@ -36,10 +36,10 @@ class DeepCNNBN(BaseModule):
                                                           kernel_size=kernel_size),
                                                 nn.BatchNorm1d(256),
                                                 nn.ReLU(inplace=True),
-                                                nn.MaxPool1d(kernel_size=(opt.content_word_seq_len - kernel_size*2 + 2))
+                                                nn.MaxPool1d(kernel_size=(opt.content_char_seq_len - kernel_size*2 + 2))
                                                 )
                                   for kernel_size in kernel_sizes]
-        self.content_word_convs = nn.ModuleList(content_word_conv)
+        self.content_convs = nn.ModuleList(content_conv)
 
         self.fc = nn.Sequential(
             nn.Linear(len(kernel_sizes)*256, 256),
@@ -48,7 +48,7 @@ class DeepCNNBN(BaseModule):
             nn.Linear(256, 2)
         )
         if opt.embed_path:
-            self.encoder.weight.data.copy_(torch.from_numpy(np.load(opt.embedding_path)['vector']))
+            self.encoder.weight.data.copy_(torch.from_numpy(np.load(opt.embed_path)['vector']))
 
 
     def forward(self, content):
@@ -56,7 +56,7 @@ class DeepCNNBN(BaseModule):
         content = self.encoder(content)
 
         # permute to [batch_size, embed_size, seq_len]
-        content = [cnw_conv(content.permute(0, 2, 1)) for cnw_conv in self.content_word_convs]
+        content = [cn_conv(content.permute(0, 2, 1)) for cn_conv in self.content_convs]
 
         # [N, C, L]
         content = torch.cat((content), dim=1)
@@ -69,9 +69,11 @@ class DeepCNNBN(BaseModule):
 
 if __name__ == '__main__':
     from config import params as opt
-    m = DeepCNNBN(opt)
-    content = Variable(torch.arange(0, 2500).view(10, 250)).long()
 
+    opt.content_char_seq_len = 250
+
+    m = DeepCNNBN(opt)
+    content = Variable(torch.arange(0, 2500).view(10, -1)).long()
     o = m(content)
     print(o.size())
     print(o.data)

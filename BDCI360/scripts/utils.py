@@ -100,7 +100,7 @@ class ArticleSample(object):
 
         self.content_char_vec = content_char_vec
         self.content_word_vec = content_word_vec
-        if label == '' or label is None:
+        if label is None:
             self.label_vec = None
         else:
             self.label_vec = [0, 1] if label == 'POSITIVE' else [1, 0]

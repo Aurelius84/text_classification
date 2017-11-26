@@ -48,7 +48,7 @@ parser.add_argument('--embed-path', type=str,
                     help='embedding dimension')
 parser.add_argument('--word_vocab', type=int, default=1485695,
                     help='word vocab size')
-parser.add_argument('--char_vocab', type=int, default=16240,
+parser.add_argument('--char_vocab', type=int, default=14804,
                     help='char vocab size')
 parser.add_argument('--content-word-seq-len', type=int, default=2619,
                     help='content word sequence length')
