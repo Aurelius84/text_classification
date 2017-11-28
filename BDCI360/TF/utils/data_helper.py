@@ -9,10 +9,8 @@ Competition url: http://www.datafountain.cn/#/competitions/276/intro
 # @File    : utils.py
 # @Software: PyCharm
 
-import csv
 import json
 import jieba
-import jieba.posseg as pseg
 import os.path
 import re
 import pickle
@@ -32,7 +30,8 @@ split_token='\u0001'
 
 class ArticleSample(object):
     def __init__(self, _id, title, deal_title, content, deal_content, judge,
-                 deal_judge, cv, word_content=None):
+                 deal_judge, cv, word_content=None, deal_sentences=None, sent_wd_real_len=None,
+                 ):
         """
         文章对象
         :param id:  文章ID(str)
@@ -55,6 +54,8 @@ class ArticleSample(object):
         self.deal_title = deal_title
         self.deal_content = deal_content
         self.word_content = word_content
+        self.deal_sentences = deal_sentences
+        self.sent_wd_real_len = sent_wd_real_len
 
         self.deal_judge = deal_judge
         self.content_repeat = 0
@@ -76,7 +77,6 @@ class ArticleSample(object):
             if (sen_dict[sen] > 1 and (len(sen) >= 10)):
                 self.content_repeat = 1
                 return
-
 
 def build_vocab(file_path, char_voc_path, word_voc_path):
     """
@@ -138,7 +138,8 @@ def build_vocab(file_path, char_voc_path, word_voc_path):
             word_max_content_length, title_segment, content_segment]
 
 
-def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5):
+def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5,
+                 min_sen_wd=8, sent_num=100, sent_len=50):
     """
     加载训练数据、测试数据
     :param file_path:  数据地址
@@ -188,17 +189,28 @@ def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5):
         if mode != 'train':
             df[3] = [''] * len(df)
         print('load data...')
-        # 如果没有预分词后的 title 和 content，则并行处理，速度快
-        # if content_segment is None:
-        #     content_segment = jieba.cut(split_token.join(df[2]))
-        #     content_segment = ' '.join(content_segment).split(split_token)
 
         cnt = 0
         for _id, title, content, judge in zip(df[0], df[1], df[2], df[3]):
             title, content = str(title), str(content)
 
             # content_word = jieba.lcut(str(content).lower().strip())
-            title = ''.join(title.split())
+            # title = ''.join(title.split())
+
+            sentences = re.split('；。！？!', content)
+            sentences = [x for x in sentences if len(x) > min_sen_wd*2]
+            # 去掉第一句 和 最后一句
+            sentences = sentences[1:-1] if len(sentences) > 5 else sentences
+            sent_wd_real_len = [len(x.split()) for x in sentences]
+            # wd padding
+            sentences = [x.split()[:sent_len] + ['<s>']*max(0, sent_len-len(x.split()))
+                         for x in sentences]
+            # sent padding
+            sentences = sentences[:sent_num] + [['<s>']*min_sen_wd]*max(0, sent_num-len(sentences))
+            # index
+            sentences = [[word_voc[wd] if wd in word_voc else 0 for wd in sent]
+                         for sent in sentences]
+
             content_word = content.split()
             content = ''.join(content_word)
 
@@ -218,6 +230,8 @@ def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5):
                 content=content,
                 deal_content=deal_content,
                 word_content=word_content,
+                deal_sentences=sentences,
+                sent_wd_real_len=sent_wd_real_len,
                 judge=judge,
                 deal_judge=deal_judge,
                 cv=np.random.randint(0, cv))
@@ -258,5 +272,5 @@ if __name__ == '__main__':
     file_path_test = '../../docs/data/evaluation_public_1000.tsv'
     char_voc_path = '../../docs/data/char_voc.json'
     word_voc_path = '../../docs/data/word_voc.json'
-    load_data_cv(file_path_train, char_voc_path, word_voc_path, 'train')
+    load_data_cv(file_path_train, char_voc_path, word_voc_path, 'train', max_sen_num=50, min_sen_wd=8)
     # load_data_cv(file_path_test, voc_path, 'eval')
