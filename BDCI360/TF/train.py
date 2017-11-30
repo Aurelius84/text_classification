@@ -10,7 +10,6 @@
 @time: 17/10/13 20:39
 """
 import json
-import os
 import time
 from math import ceil
 
@@ -27,8 +26,6 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 K.set_learning_phase(1)
-
-
 
 
 def do_eval(sess, model, eval_data, batch_size):
@@ -59,7 +56,8 @@ def do_eval(sess, model, eval_data, batch_size):
                 model.titles: curr_titles,
                 model.content: curr_contents,
                 model.labels: curr_labels,
-                model.combine_feature: curr_combine_feature
+                model.combine_feature: curr_combine_feature,
+                model.learning_rate: 0.01
                 # K.learning_phase(): 1
             })
         eval_loss += curr_loss
@@ -120,7 +118,7 @@ def train(params, train_file, eval_file):
 
     # 设置gpu限制
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.per_process_gpu_memory_fraction = 0.8
+    config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
     # add model saver, default save lastest 4 model checkpoints
     model_dir = params['model_dir'] + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
@@ -128,6 +126,7 @@ def train(params, train_file, eval_file):
     model_name = model_dir + '/' + params['model_name']
 
     with tf.Session(config=config) as sess, tf.device('/gpu:0'):
+        lr = params['learn_rate']
         cnn_rnn = CNNRNN(params)
 
         saver = tf.train.Saver(max_to_keep=2)
@@ -177,7 +176,8 @@ def train(params, train_file, eval_file):
                         cnn_rnn.titles: titles,
                         cnn_rnn.content: contents,
                         cnn_rnn.labels: labels,
-                        cnn_rnn.combine_feature: combine_feature
+                        cnn_rnn.combine_feature: combine_feature,
+                        cnn_rnn.learning_rate: lr
                         # K.learning_phase(): 1
                     })
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
@@ -225,6 +225,8 @@ def train(params, train_file, eval_file):
                             global_step=step,
                             write_meta_graph=True)
                         best_acc = tst_acc
+                    else:
+                        lr = lr * 0.8 if lr > 5e-3 else lr
                     # 早停止
                     if step - best_step > params['early_stop_eval_n'] * params['eval_test_batch']:
                         test_writer.close()
@@ -368,7 +370,9 @@ if __name__ == '__main__':
     # load params
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
-    train(params, train_file='../docs/data/train.tsv_cutv0_1_fix.csv', eval_file='../docs/data/evaluation_public.tsv')
+    train(params,
+          train_file='../docs/data/train.tsv_cutv0_1_fix.csv',
+          eval_file='../docs/data/test5000.tsv_cutv0_1_fix.csv')
 
     # 加载模型，进行数据预测
     # load_predict(

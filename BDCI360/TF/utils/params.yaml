@@ -1,6 +1,6 @@
 # params config
 # iter params
-batch_size:    256
+batch_size:    128
 epoch:        5
 learn_rate:    0.01
 log_train_batch:  25  # 每隔几个batch在tensorboard里记录训练信息
@@ -15,6 +15,8 @@ title_dim:  0 # just placeholder
 content_dim:  0 # just placeholder
 combine_dim:  0 # just placeholder
 vocab_size: 0 # just placeholder
+sent_len:   50
+sent_num:    100
 embed_dim:  100
 label:
   dim: 2
@@ -23,56 +25,59 @@ label:
   loss_func:  'binary_crossentropy' # only binary_crossentropy, categorical_crossentropy
   W_regularizer: 0.1
   activity_reg: {l1: 0.1}
-  batch_norm: {momentum: 0.9}
+#  batch_norm: {momentum: 0.9}
 # layer params
 Conv1D:
     layer1:
         filters:       48
-        filter_size:    3
-        padding_mode:   'same'
-        pooling_size:  2 # default 2
+        filter_size:    2
+        padding_mode:   'valid'
+#        pooling_size:  2 # default 2
 #        dropout:       0.2
         batch_norm:    0.9
     layer2:
         filters:       48
-        filter_size:   3
-        padding_mode:   'same'
+        filter_size:   2
+        padding_mode:   'valid'
         pooling_size:  2 # default 2
 #        dropout:      0.2
         batch_norm:   0.9
+        activation:   'relu'
 
     layer3:
         filters:       96
-        filter_size:   4
-        padding_mode:   'same'
-        pooling_size:  2 # default 2
+        filter_size:   3
+        padding_mode:   'valid'
+#        pooling_size:  2 # default 2
 #        dropout:      0.2
         batch_norm:   0.9
     layer4:
-        filters:       96
-        filter_size:   4
-        padding_mode:   'same'
+        filters:       128
+        filter_size:   3
+        padding_mode:   'valid'
         pooling_size:  2 # default 2
 #        dropout:      0.2
         batch_norm:   0.9
+        activation:   'relu'
 
     layer5:
         filters:       128
         filter_size:   5
-        padding_mode:   'same'
-        pooling_size:  2 # default 2
+        padding_mode:   'valid'
+#        pooling_size:  2 # default 2
 #        dropout:      0.2
         batch_norm:   0.9
     layer6:
         filters:       128
         filter_size:   5
-        padding_mode:   'same'
+        padding_mode:   'valid'
         pooling_size:  2 # default 2
 #        dropout:      0.2
         batch_norm:   0.9
+        activation:   'relu'
 
 RNN:
-    cell: 192
+    cell: 256
 #    dropout: 0.2  # default 0.
 #    recurrent_dropout: 0.1  # default 0.
     merge_mode: 'concat'  # One of {'sum', 'mul', 'concat', 'ave', None}

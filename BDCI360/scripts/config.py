@@ -21,7 +21,7 @@ parser.add_argument('--embed-dim', type=int, default=50,
                     help='embedding dimension')
 parser.add_argument('--input-type', type=str, default='char',
                     help='type of input data, word or char')
-parser.add_argument('--lr', type=float, default=0.001,
+parser.add_argument('--lr', type=float, default=5e-3,
                     help='initial learning rate')
 parser.add_argument('--clip', type=float, default=0,
                     help='clip learning rate')

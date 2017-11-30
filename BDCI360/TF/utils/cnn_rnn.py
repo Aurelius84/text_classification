@@ -25,6 +25,9 @@ class CNNRNN(object):
         # combine_feature
         self.combine_feature = tf.placeholder(tf.float32, [None, params['combine_dim']], name='combine_feature')
 
+        # learning rate
+        self.learning_rate = tf.placeholder(tf.float32, shape=[])
+
         # 1. embedding layers
         # with tf.device('/cpu:0'):
         embedding = Embedding(
@@ -51,7 +54,8 @@ class CNNRNN(object):
             if 'batch_norm' in params['Conv1D']['layer%s' % i]:
                 conv = BatchNormalization(momentum=params['Conv1D']['layer%s' % i]['batch_norm'])(conv)
             # activation
-            conv = Activation('relu')(conv)
+            if 'activation' in params['Conv1D']['layer%s' % i]:
+                conv = Activation(params['Conv1D']['layer%s' % i]['activation'])(conv)
             # max_pooling
             if 'pooling_size' in params['Conv1D']['layer%s' % i]:
                 conv = MaxPool1D(
@@ -77,6 +81,12 @@ class CNNRNN(object):
         # 4. consider combine_feature feature
         combine_layer = concatenate([rnn_cell, self.combine_feature], name='combine_layer')
         # combine_layer = rnn_cell
+
+
+        # add hidden layer
+        combine_layer = Dense(256, name='hidden')(combine_layer)
+        combine_layer = BatchNormalization(momentum=0.9)(combine_layer)
+        combine_layer = Activation(activation='relu')(combine_layer)
 
         # 5. predict probs for labels
         kwargs = params['label']['kwargs'] if 'kwargs' in params['label'] else {}
@@ -115,5 +125,5 @@ class CNNRNN(object):
         # self.loss = tf.add(self.loss, l2_loss)
 
         # 7. set train_op
-        self.train_op = tf.train.RMSPropOptimizer(params['learn_rate']).minimize(
+        self.train_op = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate).minimize(
             self.loss)

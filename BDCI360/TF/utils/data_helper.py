@@ -206,7 +206,7 @@ def load_data_cv(file_path, char_voc_path, word_voc_path, mode, cv=5,
             sentences = [x.split()[:sent_len] + ['<s>']*max(0, sent_len-len(x.split()))
                          for x in sentences]
             # sent padding
-            sentences = sentences[:sent_num] + [['<s>']*min_sen_wd]*max(0, sent_num-len(sentences))
+            sentences = sentences[:sent_num] + [['<s>']*sent_len]*max(0, sent_num-len(sentences))
             # index
             sentences = [[word_voc[wd] if wd in word_voc else 0 for wd in sent]
                          for sent in sentences]

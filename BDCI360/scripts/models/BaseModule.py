@@ -75,7 +75,7 @@ class BaseModule(nn.Module):
         base_params = filter(lambda p: id(p) not in ignored_params,
                              self.parameters())
         if lr2 is None: lr2 = lr1 * 0.5
-        optimizer = torch.optim.Adam([
+        optimizer = torch.optim.RMSprop([
             dict(params=base_params, weight_decay=weight_decay, lr=lr1),
             {'params': self.encoder.parameters(), 'lr': lr2}
         ])

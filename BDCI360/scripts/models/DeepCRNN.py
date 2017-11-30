@@ -17,10 +17,10 @@ import torch.nn.functional as F
 class DeepCRNN(BaseModule):
     def __init__(self, opt):
         super(DeepCRNN, self).__init__()
-        self.model_name = 'DeepCNNBN'
+        self.model_name = 'DeepCRNN'
 
-        kernel_sizes = [3, 5, 7]
-        pool_sizes = [2, 3, 4]
+        kernel_sizes = [1, 2, 3]
+        pool_sizes = [2, 2, 2]
         conv_hiddens = [100, 128, 196]
         conv_in = [opt.embed_dim] + conv_hiddens[:-1]
 
@@ -70,14 +70,10 @@ class DeepCRNN(BaseModule):
         content = content.permute(0, 2, 1)
         for cn_conv in self.content_convs:
             content = cn_conv(content)
-            print(content.size())
-
 
         # [N, C, L] --> [L, N, C]
         content = content.permute(2, 0, 1)
-        print(content.size())
         content, hidden = self.rnn(content, h0)
-        print(content.size())
         logits = F.sigmoid(self.fc(content[-1]))
 
         return logits, hidden

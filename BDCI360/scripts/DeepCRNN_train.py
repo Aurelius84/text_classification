@@ -41,7 +41,8 @@ def train(dataloader):
     test_writer = SummaryWriter(comment='_test')
 
     model = models.DeepCRNN(params)
-    optimizer = optim.Adam(model.parameters(), lr=params.lr)
+    lr = params.lr
+    optimizer = optim.RMSprop(model.parameters(), lr=lr)
     criterion = torch.nn.BCELoss()
     if params.cuda:
         model.cuda()
@@ -52,9 +53,9 @@ def train(dataloader):
 
     for epoch in range(params.epochs):
         # switch to train model
-        batch_idx = 0
-        for samples in tqdm(dataloader):
-            batch_idx += 1
+        # batch_idx = 0
+        for batch_idx, samples in enumerate(dataloader, 0):
+            # batch_idx += 1
             # print(samples['title'][0], samples['label'][0])
             vx, vy = samples[input_type], samples['label_vec']
             batch_size = vx.size()[0]
@@ -86,12 +87,14 @@ def train(dataloader):
                 params.global_step += 1
                 # 评估模型
                 test_loss, test_acc = val(model, eval_dataloader, params.global_step)
-                if test_loss < min_loss:
+                if loss.data[0] < min_loss:
                     # save model
                     model.save(name=params.save_name)
-                    min_loss = test_loss
-                else:
-                    optimizer = model.get_optimizer(lr1=params.lr/2, lr2=params.lr*0.8)
+                    min_loss = loss.data[0]
+                elif lr > 1e-5:
+                    lr /= 2
+                    optimizer = model.get_optimizer(lr1=lr, lr2=lr*1.6)
+                print(lr)
 
     train_writer.close()
 
@@ -109,7 +112,7 @@ def val(model, dataloader, step):
     '''
     model.eval()
     test_loss, correct = 0., 0
-    for samples in tqdm(dataloader):
+    for batch_idx, samples in enumerate(dataloader, 0):
         data, target = samples[input_type], samples['label_vec']
         batch_size = data.size()[0]
         h0 = model.init_hidden(batch_size, use_cuda=params.cuda)
@@ -139,7 +142,7 @@ def predict():
 if __name__ == "__main__":
     char_dict, word_dict = load_voc('../docs/data/')
     # 训练集文本
-    trainset = BDCIDataset(os.path.join(params.data, params.train_file),
+    trainset = BDCIDataset('../docs/data/train.tsv_top_5.tsv',
                            char_dict['voc'],
                            word_dict['voc'],
                            char_title_len=char_dict['max_title_length'],
@@ -148,11 +151,11 @@ if __name__ == "__main__":
                            word_content_len=word_dict['max_content_length'],
                            )
     trn_dataloader = DataLoader(trainset,
-                                pin_memory=True,
+                                # pin_memory=True,
                                 batch_size=params.batch_size,
                                 shuffle=True, num_workers=params.num_workers)
     # 测试集文本
-    eval_set = BDCIDataset(os.path.join(params.data, params.eval_file),
+    eval_set = BDCIDataset('../docs/data/test_top_sent_5000.tsv',
                            char_dict['voc'],
                            word_dict['voc'],
                            char_title_len=char_dict['max_title_length'],
@@ -161,7 +164,7 @@ if __name__ == "__main__":
                            word_content_len=word_dict['max_content_length'],
                            )
     eval_dataloader = DataLoader(eval_set,
-                                 pin_memory=True,
+                                 # pin_memory=True,
                                  batch_size=params.batch_size,
                                  shuffle=False, num_workers=params.num_workers)
     train(trn_dataloader)

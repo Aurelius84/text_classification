@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time    : 2017/11/28 16:48
+# @Time    : 2017/11/30 10:36
 # @From    : PyCharm
-# @File    : train_crnn
+# @File    : train_flatcnn
 # @Author  : Liujie Zhang
 # @Email   : liujiezhangbupt@gmail.com
 
@@ -14,13 +14,13 @@ import numpy as np
 import tensorflow as tf
 import yaml
 from keras import backend as K
-from utils.rcnn import RCNN
+from utils.FlatCNN import FlatCNN
 from utils.data_helper import load_data_cv
 
 
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 K.set_learning_phase(1)
 
@@ -38,24 +38,20 @@ def do_eval(sess, model, eval_data, batch_size):
         start = batch_size * batch
         end = start + min(batch_size, number_of_data - start)
 
-        # curr_titles = [article.deal_title for article in eval_data[start:end]]
-        curr_sentences = [
-            article.deal_sentences for article in eval_data[start:end]
+        curr_titles = [article.deal_title for article in eval_data[start:end]]
+        curr_contents = [
+            article.word_content for article in eval_data[start:end]
         ]
         curr_labels = [article.deal_judge for article in eval_data[start:end]]
         curr_combine_feature = [
             article.combine_feature for article in eval_data[start:end]
         ]
-        real_len = [
-            len(article.sent_wd_real_len) for article in eval_data[start:end]
-        ]
 
         curr_loss, curr_probs = sess.run(
             [model.loss, model.probs],
             feed_dict={
-                # model.titles: curr_titles,
-                model.content: curr_sentences,
-                model.content_sent_real_len: real_len,
+                model.titles: curr_titles,
+                model.content: curr_contents,
                 model.labels: curr_labels,
                 model.combine_feature: curr_combine_feature,
                 model.learning_rate: 0.01
@@ -91,8 +87,6 @@ def train(params, train_file, eval_file):
         char_voc_path='../docs/data/char_voc.json',
         word_voc_path='../docs/data/word_voc.json',
         mode='train',
-        sent_len=params['sent_len'],
-        sent_num=params['sent_num'],
         cv=10)
 
     params['title_dim'] = len(datas[0].deal_title)
@@ -121,16 +115,16 @@ def train(params, train_file, eval_file):
 
     # 设置gpu限制
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.per_process_gpu_memory_fraction = 0.8
+    config.gpu_options.per_process_gpu_memory_fraction = 0.3
 
     # add model saver, default save lastest 4 model checkpoints
     model_dir = params['model_dir'] + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
     os.makedirs(model_dir)
     model_name = model_dir + '/' + params['model_name']
 
-    with tf.Session(config=config) as sess, tf.device('/gpu:0'):
+    with tf.Session(config=config) as sess, tf.device('/gpu:1'):
         lr = params['learn_rate']
-        cnn_rnn = RCNN(params)
+        cnn_rnn = FlatCNN(params)
 
         saver = tf.train.Saver(max_to_keep=2)
         test_writer = tf.summary.FileWriter(log_test_dir)
@@ -156,11 +150,11 @@ def train(params, train_file, eval_file):
                 # batch_data.extend([article for article in train_datas[start:end] if article.judge != 'POSITIVE'][:len_neg])
 
                 batch_data = train_datas[start:end]
-                # titles = [
-                #     article.deal_title for article in batch_data
-                # ]
-                sentences = [
-                    article.deal_sentences for article in batch_data
+                titles = [
+                    article.deal_title for article in batch_data
+                ]
+                contents = [
+                    article.word_content for article in batch_data
                 ]
                 labels = [
                     article.deal_judge for article in batch_data
@@ -169,9 +163,6 @@ def train(params, train_file, eval_file):
                     article.combine_feature
                     for article in batch_data
                 ]
-                real_len = [
-                    len(article.sent_wd_real_len) for article in batch_data
-                ]
 
                 trn_loss, trn_probs, trn_acc, _ = sess.run(
                     [
@@ -179,9 +170,8 @@ def train(params, train_file, eval_file):
                         cnn_rnn.train_op
                     ],
                     feed_dict={
-                        # cnn_rnn.titles: titles,
-                        cnn_rnn.content: sentences,
-                        cnn_rnn.content_sent_real_len: real_len,
+                        cnn_rnn.titles: titles,
+                        cnn_rnn.content: contents,
                         cnn_rnn.labels: labels,
                         cnn_rnn.combine_feature: combine_feature,
                         cnn_rnn.learning_rate: lr
@@ -294,6 +284,9 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
             start = batch_size * batch
             end = start + min(batch_size, number_of_data - start)
 
+            curr_titles = [
+                article.deal_title for article in dataset[start:end]
+            ]
             curr_contents = [
                 article.deal_content for article in dataset[start:end]
             ]
@@ -305,9 +298,9 @@ def predict(sess, model, dataset, batch_size, save_name='eval.csv'):
             curr_preds = sess.run(
                 model.preds,
                 feed_dict={
+                    model.titles: curr_titles,
                     model.content: curr_contents,
-                    model.combine_feature: curr_combine_feature,
-                    model.learning_rate: 0.01
+                    model.combine_feature: curr_combine_feature
                     # K.learning_phase(): 1
                 })
 
@@ -344,7 +337,7 @@ def load_predict(model_meta_path,
         graph = tf.get_default_graph()
 
         # get input placeholder
-        # tf_title = graph.get_tensor_by_name('titles:0')
+        tf_title = graph.get_tensor_by_name('titles:0')
         tf_content = graph.get_tensor_by_name('content:0')
         tf_combine_feature = graph.get_tensor_by_name('combine_feature:0')
 
@@ -375,10 +368,10 @@ if __name__ == '__main__':
     params = yaml.load(open('./utils/params.yaml', 'r'))
 
     train(params,
-          train_file='../docs/data/train.tsv_cutv0_1_fix.csv',
-          eval_file='../docs/data/test_11_28.csv')
+          train_file='../docs/data/train.tsv_cutv0_1_fix_old_bak.csv',
+          eval_file='../docs/data/test5000.tsv_cutv0_1_fix.csv')
 
-    # 加载模型，进行数据预测   data/train.tsv_cutv0_1_fix.csv
+    # 加载模型，进行数据预测
     # load_predict(
     #     model_meta_path='../docs/model/best-0.906323877069-1750.meta',
     #     predict_path='../docs/data/evaluation_public.tsv',

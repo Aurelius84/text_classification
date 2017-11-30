@@ -8,3 +8,4 @@
 
 from .BaseModule import BaseModule
 from .DeepCNNBN import DeepCNNBN
+from .DeepCRNN import DeepCRNN

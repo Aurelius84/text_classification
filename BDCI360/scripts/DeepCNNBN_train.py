@@ -43,7 +43,8 @@ def train(dataloader):
     test_writer = SummaryWriter(comment='_test')
 
     model = models.DeepCNNBN(params)
-    optimizer = optim.Adam(model.parameters(), lr=params.lr)
+    lr = params.lr
+    optimizer = optim.RMSprop(model.parameters(), lr=lr)
     criterion = torch.nn.BCELoss()
     if params.cuda:
         model.cuda()
@@ -54,9 +55,9 @@ def train(dataloader):
 
     for epoch in range(params.epochs):
         # switch to train model
-        batch_idx = 0
-        for samples in tqdm(dataloader):
-            batch_idx += 1
+        # batch_idx = 0
+        for batch_idx, samples in enumerate(dataloader, 0):
+            # batch_idx += 1
             # print(samples['title'][0], samples['label'][0])
             vx, vy = samples[input_type], samples['label_vec']
             batch_size = vx.size()[0]
@@ -87,12 +88,14 @@ def train(dataloader):
                 params.global_step += 1
                 # 评估模型
                 test_loss, test_acc = val(model, eval_dataloader, params.global_step)
-                if test_loss < min_loss:
+                if loss.data[0] < min_loss:
                     # save model
                     model.save(name=params.save_name)
-                    min_loss = test_loss
-                else:
-                    optimizer = model.get_optimizer(lr1=params.lr/2, lr2=params.lr*0.8)
+                    min_loss = loss.data[0]
+                elif lr > 1e-5:
+                    lr /= 2
+                    optimizer = model.get_optimizer(lr1=lr, lr2=lr*1.6)
+                print(lr)
 
     train_writer.close()
 
@@ -110,7 +113,7 @@ def val(model, dataloader, step):
     '''
     model.eval()
     test_loss, correct = 0., 0
-    for samples in tqdm(dataloader):
+    for batch_idx, samples in enumerate(dataloader, 0):
         data, target = samples[input_type], samples['label_vec']
         if params.cuda:
             data, target = data.cuda(), target.cuda()
