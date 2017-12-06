@@ -1,0 +1,33 @@
+# params config
+# iter params
+batch_size:    512
+epoch:        12
+model_dir:   '../docs/keras'
+model_name: 'word_10CNN'
+
+# data prarms
+title_dim:  0 # just placeholder
+content_dim:  0 # just placeholder
+combine_dim:  0 # just placeholder
+vocab_size: 0 # just placeholder
+sent_len:   50
+sent_num:    100
+embed_dim:  100
+label_dim: 2
+
+drop_out_word_embed: 0.3
+drop_out_cnn_hidden: 0.3
+con_layer: 10
+
+# cnn params
+filters: 100
+pool_size: 2
+filter_size: 2
+padding_mode: "valid"
+activation: "relu"
+strides: 1
+pooling_size: 2
+drop_out_cnn: 0.3
+
+# rnn params
+rnn_cell: 200
